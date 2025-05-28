@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "pega-mcp-server": {
+      "command": "python3.12",
+      "args": ["/Users/nadadhub/pega_model_context_server/mcp_server.py"],
+      "env": {
+        "PEGA_BASE_URL": "https://roche-gtech-dt1.pegacloud.net/prweb/api/v1",
+        "PEGA_USERNAME": "nadadhub",
+        "PEGA_PASSWORD": "Pwrm*2025"
+      }
+    }
+  }
+} 

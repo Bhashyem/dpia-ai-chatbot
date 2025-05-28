@@ -1,0 +1,7 @@
+#!/bin/bash
+# DPIA Scanning Request Creation Shortcut
+# Creates "Scanning request" cases with DPIA context
+# Usage: ./dpia [title] [description]
+
+cd "$(dirname "$0")"
+python3 create_dpia.py "$@" 

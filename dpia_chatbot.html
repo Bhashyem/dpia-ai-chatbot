@@ -462,8 +462,9 @@
             hideTyping();
 
             // Simulate field detection
-            const detectedFields = simulateFieldDetection(researchText);
-            const missingFields = ['Pathologist', 'Therapeutic Area', 'Project Title'];
+            const detectedFields = analyzeTextDemo(researchText);
+            const allFields = ['Pathologist', 'Therapeutic Area', 'Project Title', 'PI', 'Procedure', 'Assay Type/Staining Type', 'Request Purpose'];
+            const missingFields = allFields.filter(field => detectedFields[field] === 'Unknown');
             
             // Create analysis response
             let response = `🔍 <strong>Analysis Complete!</strong><br><br>`;
@@ -491,29 +492,57 @@
             }
         }
 
-        function simulateFieldDetection(text) {
+        function analyzeTextDemo(text) {
             const fields = {
+                'Pathologist': 'Unknown',
                 'Therapeutic Area': 'Unknown',
+                'Project Title': 'Unknown',
+                'PI': 'Unknown',
                 'Procedure': 'Unknown',
                 'Assay Type/Staining Type': 'Unknown',
-                'PI': 'Unknown',
-                'Pathologist': 'Unknown',
-                'Project Title': 'Unknown',
                 'Request Purpose': 'Unknown'
             };
 
-            // Simulate detection logic
-            if (text.toLowerCase().includes('tritc') || text.toLowerCase().includes('dapi')) {
-                fields['Procedure'] = 'Fluorescence (IF)';
-                fields['Assay Type/Staining Type'] = 'Other';
-            }
-            
-            if (text.toLowerCase().includes('quantification')) {
-                fields['Request Purpose'] = 'Quantification and analysis';
+            // Detect therapeutic area
+            if (text.toLowerCase().includes('lung') || text.toLowerCase().includes('stem cell')) {
+                fields['Therapeutic Area'] = 'Neurology';
+            } else if (text.toLowerCase().includes('cancer') || text.toLowerCase().includes('tumor')) {
+                fields['Therapeutic Area'] = 'Oncology';
+            } else if (text.toLowerCase().includes('heart') || text.toLowerCase().includes('cardiovascular')) {
+                fields['Therapeutic Area'] = 'CVRM';
             }
 
-            if (text.toLowerCase().includes('lung') || text.toLowerCase().includes('stem cell')) {
-                // Could detect neurology, but we'll leave it for interactive prompt
+            // Detect procedure type
+            if (text.toLowerCase().includes('tritc') || text.toLowerCase().includes('dapi') || text.toLowerCase().includes('fluorescence')) {
+                fields['Procedure'] = 'Fluorescence (IF)';
+            } else if (text.toLowerCase().includes('bright-field') || text.toLowerCase().includes('brightfield')) {
+                fields['Procedure'] = 'Bright-field (BF)';
+            } else if (text.toLowerCase().includes('h&e') || text.toLowerCase().includes('hematoxylin')) {
+                fields['Procedure'] = 'Bright-field (BF)';
+            }
+
+            // Detect assay/staining type
+            if (text.toLowerCase().includes('h&e') || text.toLowerCase().includes('hematoxylin')) {
+                fields['Assay Type/Staining Type'] = 'H&E';
+            } else if (text.toLowerCase().includes('ihc') || text.toLowerCase().includes('immunohistochemistry')) {
+                fields['Assay Type/Staining Type'] = 'IHC';
+            } else if (text.toLowerCase().includes('tritc') || text.toLowerCase().includes('dapi') || text.toLowerCase().includes('fluorescent')) {
+                fields['Assay Type/Staining Type'] = 'Other';
+            } else if (text.toLowerCase().includes('special stain')) {
+                fields['Assay Type/Staining Type'] = 'Special Stain';
+            }
+
+            // Detect request purpose
+            if (text.toLowerCase().includes('quantification')) {
+                fields['Request Purpose'] = 'Quantification and analysis';
+            } else if (text.toLowerCase().includes('imaging') || text.toLowerCase().includes('documentation')) {
+                fields['Request Purpose'] = 'Imaging and documentation';
+            } else if (text.toLowerCase().includes('biomarker')) {
+                fields['Request Purpose'] = 'Biomarker analysis';
+            } else if (text.toLowerCase().includes('validation')) {
+                fields['Request Purpose'] = 'Research validation';
+            } else if (text.toLowerCase().includes('diagnostic')) {
+                fields['Request Purpose'] = 'Diagnostic support';
             }
 
             return fields;

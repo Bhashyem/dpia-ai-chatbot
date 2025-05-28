@@ -1,0 +1,20 @@
+Sample Medical Report
+
+Patient ID: 12345
+Date: 2025-05-27
+
+This is a scanning request for DPIA assessment of biospecimen sample BS-001.
+The pathology request requires special stain: H&E staining for tissue analysis.
+
+Assay instructions: Perform immunohistochemistry analysis on slide 5 sections.
+Block ID: BLK-2025-001
+Slide count: 12 slides prepared for examination.
+
+Another scanning request was submitted for specimen BS-002 with trim instructions 
+for serial sectioning at 4 microns thickness.
+
+DPIA batch run scheduled for privacy assessment of all biospecimen data.
+Status: Pending review for data privacy compliance.
+
+Additional notes: This scanning request involves sensitive patient data requiring 
+careful handling according to DPIA guidelines. 

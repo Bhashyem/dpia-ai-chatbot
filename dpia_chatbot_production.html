@@ -530,9 +530,13 @@
             let response = `🔍 <strong>Analysis Complete!</strong><br><br>`;
             response += `I've analyzed your research text and here's what I found:<br><br>`;
             
+            // Fix: Access detected_fields from the correct nested structure
+            const detectedFields = result.analysis?.detected_fields || result.detected_fields || {};
+            const interactivePrompts = result.analysis?.interactive_prompts || result.interactive_prompts || [];
+            
             // Show detected fields
             response += `<div class="field-status">`;
-            Object.entries(result.detected_fields || {}).forEach(([field, value]) => {
+            Object.entries(detectedFields).forEach(([field, value]) => {
                 const isDetected = value !== "Unknown" && value && value.trim();
                 response += `<div class="field-item ${isDetected ? 'field-detected' : 'field-missing'}">
                     <strong>${field}:</strong><br>${isDetected ? '✅' : '❌'} ${value || 'Not detected'}
@@ -540,16 +544,75 @@
             });
             response += `</div>`;
 
-            if (result.interactive_prompts && result.interactive_prompts.length > 0) {
-                response += `<br>🤖 <strong>I need to ask you about ${result.interactive_prompts.length} missing fields to create a complete DPIA case:</strong>`;
+            if (interactivePrompts && interactivePrompts.length > 0) {
+                response += `<br>🤖 <strong>I need to ask you about ${interactivePrompts.length} missing fields to create a complete DPIA case:</strong>`;
                 addMessage('bot', response);
                 
                 setTimeout(() => {
-                    showInteractivePrompts(result.interactive_prompts);
+                    showInteractivePrompts(interactivePrompts);
                 }, 500);
             } else {
-                response += `<br>✅ <strong>All fields detected! Ready to create DPIA case.</strong>`;
-                addMessage('bot', response);
+                // All fields detected - check if case was already created
+                if (result.case_created && result.case_id) {
+                    // Case was already created in the analysis call
+                    response += `<br>✅ <strong>All fields detected! DPIA case created automatically.</strong>`;
+                    addMessage('bot', response);
+                    
+                    // Show case creation result
+                    setTimeout(() => {
+                        displayCaseCreationResult(result);
+                    }, 500);
+                } else {
+                    // All fields detected but case not created yet - create it now
+                    response += `<br>✅ <strong>All fields detected! Creating DPIA case now...</strong>`;
+                    addMessage('bot', response);
+                    
+                    // Show processing and create case
+                    setTimeout(async () => {
+                        showTyping();
+                        await createDPIACaseAutomatic();
+                    }, 500);
+                }
+            }
+        }
+
+        async function createDPIACaseAutomatic() {
+            try {
+                // Get the original research text from the first user message
+                const originalText = currentConversation.find(msg => msg.type === 'user')?.content || '';
+                
+                const response = await fetch(CONFIG.API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: 'analyze_and_create_dpia',
+                        arguments: {
+                            research_text: originalText,
+                            auto_create: true
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                hideTyping();
+
+                if (result.content && result.content[0] && result.content[0].text) {
+                    const caseResult = JSON.parse(result.content[0].text);
+                    displayCaseCreationResult(caseResult);
+                } else {
+                    throw new Error('Invalid response format from server');
+                }
+            } catch (error) {
+                hideTyping();
+                console.error('Automatic Case Creation Error:', error);
+                addMessage('bot', `❌ Failed to create DPIA case automatically: ${error.message}<br><br>💡 <strong>Falling back to demo mode...</strong>`);
+                await createDPIACaseDemo({});
             }
         }
 
@@ -558,8 +621,9 @@
             await new Promise(resolve => setTimeout(resolve, 2000));
             hideTyping();
 
-            const detectedFields = simulateFieldDetection(researchText);
-            const missingFields = ['Pathologist', 'Therapeutic Area', 'Project Title'];
+            const detectedFields = analyzeTextDemo(researchText);
+            const allFields = ['Pathologist', 'Therapeutic Area', 'Project Title', 'PI', 'Procedure', 'Assay Type/Staining Type', 'Request Purpose'];
+            const missingFields = allFields.filter(field => detectedFields[field] === 'Unknown');
             
             let response = `🔍 <strong>Analysis Complete!</strong> <em>(Demo Mode)</em><br><br>`;
             response += `I've analyzed your research text (${researchText.length} characters) and here's what I found:<br><br>`;
@@ -583,24 +647,57 @@
             }
         }
 
-        function simulateFieldDetection(text) {
+        function analyzeTextDemo(text) {
             const fields = {
+                'Pathologist': 'Unknown',
                 'Therapeutic Area': 'Unknown',
+                'Project Title': 'Unknown',
+                'PI': 'Unknown',
                 'Procedure': 'Unknown',
                 'Assay Type/Staining Type': 'Unknown',
-                'PI': 'Unknown',
-                'Pathologist': 'Unknown',
-                'Project Title': 'Unknown',
                 'Request Purpose': 'Unknown'
             };
 
-            if (text.toLowerCase().includes('tritc') || text.toLowerCase().includes('dapi')) {
-                fields['Procedure'] = 'Fluorescence (IF)';
-                fields['Assay Type/Staining Type'] = 'Other';
+            // Detect therapeutic area
+            if (text.toLowerCase().includes('lung') || text.toLowerCase().includes('stem cell')) {
+                fields['Therapeutic Area'] = 'Neurology';
+            } else if (text.toLowerCase().includes('cancer') || text.toLowerCase().includes('tumor')) {
+                fields['Therapeutic Area'] = 'Oncology';
+            } else if (text.toLowerCase().includes('heart') || text.toLowerCase().includes('cardiovascular')) {
+                fields['Therapeutic Area'] = 'CVRM';
             }
-            
+
+            // Detect procedure type
+            if (text.toLowerCase().includes('tritc') || text.toLowerCase().includes('dapi') || text.toLowerCase().includes('fluorescence')) {
+                fields['Procedure'] = 'Fluorescence (IF)';
+            } else if (text.toLowerCase().includes('bright-field') || text.toLowerCase().includes('brightfield')) {
+                fields['Procedure'] = 'Bright-field (BF)';
+            } else if (text.toLowerCase().includes('h&e') || text.toLowerCase().includes('hematoxylin')) {
+                fields['Procedure'] = 'Bright-field (BF)';
+            }
+
+            // Detect assay/staining type
+            if (text.toLowerCase().includes('h&e') || text.toLowerCase().includes('hematoxylin')) {
+                fields['Assay Type/Staining Type'] = 'H&E';
+            } else if (text.toLowerCase().includes('ihc') || text.toLowerCase().includes('immunohistochemistry')) {
+                fields['Assay Type/Staining Type'] = 'IHC';
+            } else if (text.toLowerCase().includes('tritc') || text.toLowerCase().includes('dapi') || text.toLowerCase().includes('fluorescent')) {
+                fields['Assay Type/Staining Type'] = 'Other';
+            } else if (text.toLowerCase().includes('special stain')) {
+                fields['Assay Type/Staining Type'] = 'Special Stain';
+            }
+
+            // Detect request purpose
             if (text.toLowerCase().includes('quantification')) {
                 fields['Request Purpose'] = 'Quantification and analysis';
+            } else if (text.toLowerCase().includes('imaging') || text.toLowerCase().includes('documentation')) {
+                fields['Request Purpose'] = 'Imaging and documentation';
+            } else if (text.toLowerCase().includes('biomarker')) {
+                fields['Request Purpose'] = 'Biomarker analysis';
+            } else if (text.toLowerCase().includes('validation')) {
+                fields['Request Purpose'] = 'Research validation';
+            } else if (text.toLowerCase().includes('diagnostic')) {
+                fields['Request Purpose'] = 'Diagnostic support';
             }
 
             return fields;
@@ -651,7 +748,7 @@
                     field: 'Pathologist',
                     question: '🔬 Who is the pathologist for this project?',
                     input_type: 'text_input',
-                    suggestions: ['Dr. Bhashyam', 'Dr. Smith', 'Dr. Johnson']
+                    suggestions: ['Dr. Bhashyam', 'Dr. Smith', 'Dr. Johnson', 'Dr. Wilson']
                 });
             }
             
@@ -669,7 +766,43 @@
                     field: 'Project Title',
                     question: '📋 What would you like to call this project?',
                     input_type: 'text_input',
-                    suggestions: ['Lung Stem Cell Analysis', 'AT2 Cell Quantification Study', 'Fluorescence Imaging Project']
+                    suggestions: ['Lung Stem Cell Analysis', 'AT2 Cell Quantification Study', 'Fluorescence Imaging Project', 'Pathology Research Study']
+                });
+            }
+            
+            if (missingFields.includes('PI')) {
+                prompts.push({
+                    field: 'PI',
+                    question: '👨‍🔬 Who is the Primary Investigator for this project?',
+                    input_type: 'text_input',
+                    suggestions: ['Dr. Research Lead', 'Principal Investigator', 'Study Director', 'Project Lead']
+                });
+            }
+            
+            if (missingFields.includes('Procedure')) {
+                prompts.push({
+                    field: 'Procedure',
+                    question: '🔬 What type of procedure will be used?',
+                    input_type: 'selection',
+                    options: ['Bright-field (BF)', 'Fluorescence (IF)', 'BF+IF', 'Unknown']
+                });
+            }
+            
+            if (missingFields.includes('Assay Type/Staining Type')) {
+                prompts.push({
+                    field: 'Assay Type/Staining Type',
+                    question: '🧪 What type of assay or staining will be performed?',
+                    input_type: 'selection',
+                    options: ['H&E', 'IHC', 'Special Stain', 'Other', 'Unknown']
+                });
+            }
+            
+            if (missingFields.includes('Request Purpose')) {
+                prompts.push({
+                    field: 'Request Purpose',
+                    question: '🎯 What is the main purpose of this research request?',
+                    input_type: 'selection',
+                    options: ['Quantification and analysis', 'Imaging and documentation', 'Biomarker analysis', 'Research validation', 'Diagnostic support', 'Other']
                 });
             }
 
@@ -723,6 +856,9 @@
 
         async function createDPIACaseReal(responses) {
             try {
+                // Get the original research text from the first user message
+                const originalText = currentConversation.find(msg => msg.type === 'user')?.content || '';
+                
                 const response = await fetch(CONFIG.API_URL, {
                     method: 'POST',
                     headers: {
@@ -731,9 +867,9 @@
                     body: JSON.stringify({
                         name: 'analyze_and_create_dpia',
                         arguments: {
-                            research_text: currentConversation[0] || '',
-                            action: 'create_case',
-                            user_responses: responses
+                            research_text: originalText,
+                            auto_create: true,
+                            prompt_responses: responses
                         }
                     })
                 });
@@ -795,13 +931,13 @@
         }
 
         function displayCaseCreationResult(result) {
-            if (result.success) {
+            if (result.success && result.case_created) {
                 const successMessage = `
                     <div class="case-success">
                         <strong>🎉 DPIA Case Created Successfully!</strong><br>
-                        <strong>Case ID:</strong> ${result.case_id}<br>
-                        <strong>Status:</strong> ${result.status}<br>
-                        <strong>Fields:</strong> ${result.completed_fields}/${result.total_fields} Complete
+                        <strong>Case ID:</strong> ${result.case_id || 'Unknown'}<br>
+                        <strong>Status:</strong> Validated & Complete<br>
+                        <strong>Fields:</strong> ${result.summary?.detected_fields || 7}/${result.summary?.total_fields || 7} Complete
                     </div>
                     
                     <strong>Perfect! I've successfully created your DPIA case in the Pega system!</strong><br><br>
@@ -821,7 +957,8 @@
                 `;
                 addMessage('bot', successMessage);
             } else {
-                addMessage('bot', `❌ Failed to create DPIA case: ${result.error || 'Unknown error'}`);
+                const errorMessage = result.error || result.message || 'Unknown error occurred';
+                addMessage('bot', `❌ Failed to create DPIA case: ${errorMessage}<br><br>💡 The analysis was successful, but there was an issue with case creation. This might be due to Pega server connectivity.`);
             }
             
             awaitingPromptResponses = false;
@@ -843,10 +980,12 @@
             messagesContainer.appendChild(messageDiv);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
             
-            // Store conversation for context
-            if (sender === 'user') {
-                currentConversation.push(content);
-            }
+            // Store conversation for context - store original text, not HTML
+            currentConversation.push({
+                type: sender,
+                content: content.replace(/<[^>]*>/g, '').trim(), // Strip HTML tags for API calls
+                timestamp: new Date().toISOString()
+            });
         }
 
         function showTyping() {

@@ -1,0 +1,7 @@
+#!/bin/bash
+# Scanning Request Summarizer Shortcut
+# Analyzes text for scanning requests and outputs in pathology format
+# Usage: ./scan_summary [filename] [--json] [--save]
+
+cd "$(dirname "$0")"
+python3 scanning_summarizer.py "$@" 

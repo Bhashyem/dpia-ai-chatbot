@@ -1,0 +1,9 @@
+#!/bin/bash
+# Combined DPIA Analyzer & Case Creator
+# Analyzes text for scanning requests and creates DPIA cases in Pega
+# Usage: echo "text" | ./analyze_dpia
+#        ./analyze_dpia filename.txt
+#        ./analyze_dpia --title "Custom Title" filename.txt
+
+cd "$(dirname "$0")"
+python3 dpia_analyzer.py "$@" 

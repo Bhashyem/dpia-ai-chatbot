@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 DPIA Analysis AI Bot</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #333;
+            margin: 0;
+            font-size: 2.5em;
+        }
+        .header p {
+            color: #666;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        .optional-fields {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 10px 5px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+        .results.show {
+            display: block;
+        }
+        .field-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .field-item {
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .field-detected {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+        }
+        .field-missing {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+        .recommendations {
+            background: #e7f3ff;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+        }
+        .case-success {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 6px;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 DPIA Analysis AI Bot</h1>
+            <p>Intelligent assistant for analyzing research text and creating validated DPIA cases</p>
+        </div>
+
+        <form id="analysisForm">
+            <div class="form-group">
+                <label for="researchText">Research Text *</label>
+                <textarea id="researchText" placeholder="Enter your research description here..." required></textarea>
+            </div>
+
+            <div style="text-align: center;">
+                <button type="button" class="btn" onclick="analyzeOnly()">🔍 Analyze Only</button>
+                <button type="button" class="btn" onclick="analyzeAndCreate()">🏢 Analyze & Create DPIA Case</button>
+            </div>
+        </form>
+
+        <div id="results" class="results">
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>AI Bot is analyzing your research...</p>
+            </div>
+            <div id="analysisResults"></div>
+            <div id="interactivePrompts" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentPromptResponses = {};
+        let currentAnalysisData = null;
+
+        async function callAIBot(autoCreate = false, promptResponses = {}) {
+            const researchText = document.getElementById('researchText').value;
+            if (!researchText.trim()) {
+                alert('Please enter research text');
+                return;
+            }
+
+            const payload = {
+                name: "analyze_and_create_dpia",
+                arguments: {
+                    research_text: researchText,
+                    auto_create: autoCreate
+                }
+            };
+
+            // Add prompt responses if provided
+            if (Object.keys(promptResponses).length > 0) {
+                payload.arguments.prompt_responses = promptResponses;
+            }
+
+            // Show loading
+            document.getElementById('results').classList.add('show');
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('analysisResults').innerHTML = '';
+            document.getElementById('interactivePrompts').style.display = 'none';
+
+            try {
+                const response = await fetch('http://localhost:8080/tools/call', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const result = await response.json();
+                const content = JSON.parse(result.content[0].text);
+
+                currentAnalysisData = content;
+                displayResults(content);
+
+            } catch (error) {
+                document.getElementById('analysisResults').innerHTML = `
+                    <div style="background: #f8d7da; padding: 15px; border-radius: 6px; border-left: 4px solid #dc3545;">
+                        <h3>❌ Connection Error</h3>
+                        <p>Could not connect to the AI Bot server. Make sure it's running on localhost:8080</p>
+                        <p>Error: ${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function displayResults(content) {
+            let html = `
+                <h3>${content.message}</h3>
+                <p><strong>Success:</strong> ${content.success ? '✅ Yes' : '❌ No'}</p>
+            `;
+
+            if (content.analysis) {
+                const analysis = content.analysis;
+                
+                html += `<h4>🔍 Detected Fields</h4><div class="field-status">`;
+                
+                for (const [field, value] of Object.entries(analysis.detected_fields)) {
+                    const isDetected = value !== "Unknown" && value;
+                    html += `
+                        <div class="field-item ${isDetected ? 'field-detected' : 'field-missing'}">
+                            <strong>${field}:</strong><br>
+                            ${isDetected ? '✅' : '❌'} ${value}
+                        </div>
+                    `;
+                }
+                
+                html += `</div>`;
+
+                if (analysis.recommendations && analysis.recommendations.length > 0) {
+                    html += `
+                        <div class="recommendations">
+                            <h4>💡 AI Recommendations</h4>
+                            <ul>
+                                ${analysis.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                            </ul>
+                        </div>
+                    `;
+                }
+            }
+
+            if (content.case_created) {
+                html += `
+                    <div class="case-success">
+                        <h4>🎉 DPIA Case Created Successfully!</h4>
+                        <p><strong>Case ID:</strong> ${content.case_id}</p>
+                        <p><strong>Validation Status:</strong> ${content.summary.validation_status}</p>
+                        <p><strong>Fields Detected:</strong> ${content.summary.detected_fields}/${content.summary.total_fields}</p>
+                    </div>
+                `;
+            }
+
+            if (content.next_steps && content.next_steps.length > 0) {
+                html += `
+                    <div class="recommendations">
+                        <h4>📋 Next Steps</h4>
+                        <ul>
+                            ${content.next_steps.map(step => `<li>${step}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+            }
+
+            document.getElementById('analysisResults').innerHTML = html;
+
+            // Handle interactive prompts
+            if (content.requires_interaction && content.analysis && content.analysis.interactive_prompts) {
+                displayInteractivePrompts(content.analysis.interactive_prompts);
+            }
+        }
+
+        function displayInteractivePrompts(prompts) {
+            const promptsContainer = document.getElementById('interactivePrompts');
+            
+            let html = `
+                <div style="background: #e7f3ff; border-left: 4px solid #007bff; padding: 20px; margin: 20px 0; border-radius: 8px;">
+                    <h3>🤖 Interactive Questions</h3>
+                    <p>I need some additional information to complete your DPIA case:</p>
+            `;
+
+            prompts.forEach((prompt, index) => {
+                html += `
+                    <div style="margin: 20px 0; padding: 15px; background: white; border-radius: 8px; border: 1px solid #ddd;">
+                        <h4>${prompt.prompt}</h4>
+                `;
+
+                if (prompt.type === 'selection') {
+                    html += `<div style="margin: 10px 0;">`;
+                    prompt.options.forEach(option => {
+                        html += `
+                            <label style="display: block; margin: 5px 0; cursor: pointer;">
+                                <input type="radio" name="prompt_${prompt.field}" value="${option}" style="margin-right: 8px;">
+                                ${option}
+                            </label>
+                        `;
+                    });
+                    html += `</div>`;
+                } else if (prompt.type === 'text_input') {
+                    html += `
+                        <input type="text" id="prompt_${prompt.field}" placeholder="Enter ${prompt.field.toLowerCase()}..." 
+                               style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0;">
+                    `;
+                    if (prompt.suggestions) {
+                        html += `<div style="margin: 5px 0; font-size: 12px; color: #666;">
+                            Suggestions: ${prompt.suggestions.join(', ')}
+                        </div>`;
+                    }
+                }
+
+                html += `</div>`;
+            });
+
+            html += `
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button class="btn" onclick="submitPromptResponses()">
+                            🚀 Submit Responses & Create DPIA Case
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            promptsContainer.innerHTML = html;
+            promptsContainer.style.display = 'block';
+        }
+
+        function submitPromptResponses() {
+            const responses = {};
+            
+            // Get all prompt responses
+            if (currentAnalysisData && currentAnalysisData.analysis && currentAnalysisData.analysis.interactive_prompts) {
+                currentAnalysisData.analysis.interactive_prompts.forEach(prompt => {
+                    if (prompt.type === 'selection') {
+                        const selected = document.querySelector(`input[name="prompt_${prompt.field}"]:checked`);
+                        if (selected) {
+                            responses[prompt.field] = selected.value;
+                        }
+                    } else if (prompt.type === 'text_input') {
+                        const input = document.getElementById(`prompt_${prompt.field}`);
+                        if (input && input.value.trim()) {
+                            responses[prompt.field] = input.value.trim();
+                        }
+                    }
+                });
+            }
+
+            // Validate that all prompts have responses
+            const missingResponses = [];
+            if (currentAnalysisData && currentAnalysisData.analysis && currentAnalysisData.analysis.interactive_prompts) {
+                currentAnalysisData.analysis.interactive_prompts.forEach(prompt => {
+                    if (!responses[prompt.field]) {
+                        missingResponses.push(prompt.field);
+                    }
+                });
+            }
+
+            if (missingResponses.length > 0) {
+                alert(`Please provide responses for: ${missingResponses.join(', ')}`);
+                return;
+            }
+
+            // Call AI bot with responses
+            callAIBot(true, responses);
+        }
+
+        function analyzeOnly() {
+            callAIBot(false);
+        }
+
+        function analyzeAndCreate() {
+            callAIBot(true);
+        }
+
+        // Pre-fill with example text
+        document.getElementById('researchText').value = `We have 4 groups (healthy, injured+vehicle control, treatment 1(Rmim), treatment 2 (Wmim).Lung stem cells (AT2-TRITC) and total cells (DAPI) are stained. N=9-10 per group were stained and need imaging and quantification. I am interested in imaging of AT2 (TRITC) stem cells and DAPI and quantification of: 1. # of AT2 cells per lung section 2. # of AT2 cells normalized by total area of lung section 3. # of AT2 cells normalized by # of DPIA cells per lung section`;
+    </script>
+</body>
+</html> 

@@ -332,7 +332,10 @@ async def analyze_and_create_dpia(arguments: Dict[str, Any]) -> Dict[str, Any]:
         missing_fields = []
         interactive_prompts = []
         
-        for field in summarizer.mandatory_fields:
+        # Enhanced validation - check ALL important fields, not just mandatory ones
+        all_important_fields = ["Pathologist", "Therapeutic Area", "Project Title", "PI", "Procedure", "Assay Type/Staining Type", "Request Purpose"]
+        
+        for field in all_important_fields:
             if field not in detected_fields or detected_fields[field] == "Unknown" or not detected_fields[field]:
                 missing_fields.append(field)
                 
@@ -340,30 +343,51 @@ async def analyze_and_create_dpia(arguments: Dict[str, Any]) -> Dict[str, Any]:
                 if field == "Pathologist":
                     interactive_prompts.append({
                         "field": "Pathologist",
-                        "prompt": "🔬 I couldn't detect the pathologist name from your research text. Could you please provide the pathologist's name?",
-                        "suggestions": ["Dr. Bhashyam", "Dr. Smith", "Dr. Johnson"],
-                        "type": "text_input"
+                        "question": "🔬 I couldn't detect the pathologist name from your research text. Could you please provide the pathologist's name?",
+                        "input_type": "text_input",
+                        "suggestions": ["Dr. Bhashyam", "Dr. Smith", "Dr. Johnson", "Dr. Wilson"]
                     })
                 elif field == "Therapeutic Area":
                     interactive_prompts.append({
                         "field": "Therapeutic Area",
-                        "prompt": "🏥 I couldn't determine the therapeutic area from your research. Please select the most appropriate therapeutic area:",
-                        "options": ["CVRM", "Neurology", "Oncology", "Ophthalmology", "Infectious Diseases", "Immunology", "Unknown"],
-                        "type": "selection"
+                        "question": "🏥 I couldn't determine the therapeutic area from your research. Please select the most appropriate therapeutic area:",
+                        "input_type": "selection",
+                        "options": ["CVRM", "Neurology", "Oncology", "Ophthalmology", "Infectious Diseases", "Immunology", "Unknown"]
                     })
                 elif field == "Project Title":
                     interactive_prompts.append({
                         "field": "Project Title",
-                        "prompt": "📋 I couldn't extract a clear project title from your research text. Could you provide a descriptive project title?",
-                        "suggestions": ["Lung Stem Cell Analysis", "AT2 Cell Quantification Study", "Fluorescence Imaging Project"],
-                        "type": "text_input"
+                        "question": "📋 I couldn't extract a clear project title from your research text. Could you provide a descriptive project title?",
+                        "input_type": "text_input",
+                        "suggestions": ["Lung Stem Cell Analysis", "AT2 Cell Quantification Study", "Fluorescence Imaging Project", "Pathology Research Study"]
                     })
                 elif field == "PI":
                     interactive_prompts.append({
                         "field": "PI",
-                        "prompt": "👨‍🔬 I couldn't identify the Primary Investigator from your research text. Who is the PI for this project?",
-                        "suggestions": ["Dr. Research Lead", "Principal Investigator", "Study Director"],
-                        "type": "text_input"
+                        "question": "👨‍🔬 I couldn't identify the Primary Investigator from your research text. Who is the PI for this project?",
+                        "input_type": "text_input",
+                        "suggestions": ["Dr. Research Lead", "Principal Investigator", "Study Director", "Project Lead"]
+                    })
+                elif field == "Procedure":
+                    interactive_prompts.append({
+                        "field": "Procedure",
+                        "question": "🔬 I couldn't determine the procedure type from your research. Please select the most appropriate procedure:",
+                        "input_type": "selection",
+                        "options": ["Bright-field (BF)", "Fluorescence (IF)", "BF+IF", "Unknown"]
+                    })
+                elif field == "Assay Type/Staining Type":
+                    interactive_prompts.append({
+                        "field": "Assay Type/Staining Type",
+                        "question": "🧪 I couldn't identify the assay/staining type from your research. Please select the most appropriate type:",
+                        "input_type": "selection",
+                        "options": ["H&E", "IHC", "Special Stain", "Other", "Unknown"]
+                    })
+                elif field == "Request Purpose":
+                    interactive_prompts.append({
+                        "field": "Request Purpose",
+                        "question": "🎯 I couldn't determine the purpose of your research request. Please select or specify the main purpose:",
+                        "input_type": "selection",
+                        "options": ["Quantification and analysis", "Imaging and documentation", "Biomarker analysis", "Research validation", "Diagnostic support", "Other"]
                     })
         
         analysis_result["missing_fields"] = missing_fields
@@ -409,9 +433,9 @@ async def analyze_and_create_dpia(arguments: Dict[str, Any]) -> Dict[str, Any]:
                     detected_fields[field] = response
                     analysis_result["detected_fields"][field] = response
             
-            # Recheck missing fields after responses
+            # Recheck missing fields after responses using the same field list
             missing_fields = []
-            for field in summarizer.mandatory_fields:
+            for field in all_important_fields:
                 if field not in detected_fields or detected_fields[field] == "Unknown" or not detected_fields[field]:
                     missing_fields.append(field)
             
@@ -439,9 +463,15 @@ async def analyze_and_create_dpia(arguments: Dict[str, Any]) -> Dict[str, Any]:
             # Create the DPIA case
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
             
+            # Create a shorter label that fits Pega's 64 character limit
+            project_title = detected_fields['Project Title']
+            if len(project_title) > 40:
+                project_title = project_title[:37] + "..."
+            short_label = f"DPIA - {project_title}"
+            
             case_content = {
-                "pyLabel": f"Scanning request - {detected_fields['Project Title']} - {timestamp}",
-                "pyDescription": f"DPIA Scanning Request - AI Bot Analysis\n\nAnalysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\nText Length: {len(research_text)} characters\n\nDetected Fields:\n" + 
+                "pyLabel": short_label,
+                "pyDescription": f"DPIA Scanning Request - AI Bot Analysis\n\nAnalysis Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\nText Length: {len(research_text)} characters\n\nDetected Fields:\n" +
                                "\n".join([f"- {k}: {v}" for k, v in detected_fields.items()]) +
                                f"\n\nOriginal Research Text:\n{research_text[:500]}{'...' if len(research_text) > 500 else ''}",
                 "pxCreatedFromChannel": "MCP-AI-Bot"
@@ -449,6 +479,7 @@ async def analyze_and_create_dpia(arguments: Dict[str, Any]) -> Dict[str, Any]:
             
             case_args = {
                 "caseTypeID": "Roche-Pathworks-Work-DPIA",
+                "processID": "pyStartCase",
                 "content": case_content
             }
             
@@ -512,7 +543,7 @@ async def health_check():
 @app.get("/web")
 async def web_interface():
     """Serve the AI Bot web interface"""
-    return FileResponse("ai_bot_web.html")
+    return FileResponse("dpia_chatbot_production.html")
 
 if __name__ == "__main__":
     print("Starting Simple Pega MCP Server...")
