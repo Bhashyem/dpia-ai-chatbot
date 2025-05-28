@@ -544,9 +544,9 @@
 
             // Detect PI (Primary Investigator)
             const piPatterns = [
-                /pi:\s*([a-zA-Z\s\.]+)/i,
-                /primary\s+investigator:\s*([a-zA-Z\s\.]+)/i,
-                /pi\s+is\s+([a-zA-Z\s\.]+)/i
+                /pi:\s*([a-zA-Z\s\.]+?)(?:\s+and\s|\s*$|\s*,|\s*;)/i,
+                /primary\s+investigator:\s*([a-zA-Z\s\.]+?)(?:\s+and\s|\s*$|\s*,|\s*;)/i,
+                /pi\s+is\s+([a-zA-Z\s\.]+?)(?:\s+and\s|\s*$|\s*,|\s*;)/i
             ];
             
             for (const pattern of piPatterns) {
