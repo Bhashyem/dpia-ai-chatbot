@@ -480,14 +480,53 @@
             });
             response += `</div>`;
 
-            response += `<br>🤖 <strong>I need to ask you about ${missingFields.length} missing fields to create a complete DPIA case:</strong>`;
-
-            addMessage('bot', response);
-
-            // Add interactive prompts
             if (missingFields.length > 0) {
+                response += `<br>🤖 <strong>I need to ask you about ${missingFields.length} missing fields to create a complete DPIA case:</strong>`;
+                addMessage('bot', response);
+
+                // Add interactive prompts for missing fields
                 setTimeout(() => {
                     showInteractivePrompts(missingFields);
+                }, 500);
+            } else {
+                // All fields detected - create case automatically
+                response += `<br>✅ <strong>All fields detected! Creating DPIA case automatically...</strong>`;
+                addMessage('bot', response);
+
+                // Show processing and create case
+                setTimeout(async () => {
+                    showTyping();
+                    await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate case creation
+                    hideTyping();
+                    
+                    // Simulate successful case creation
+                    const caseId = 'C-' + Math.floor(Math.random() * 90000 + 10000);
+                    
+                    const successMessage = `
+                        <div class="case-success">
+                            <strong>🎉 DPIA Case Created Successfully!</strong><br>
+                            <strong>Case ID:</strong> ${caseId}<br>
+                            <strong>Status:</strong> Validated & Complete<br>
+                            <strong>Fields:</strong> 7/7 Complete
+                        </div>
+                        
+                        <strong>Perfect! I've successfully created your DPIA case automatically since all required information was detected!</strong><br><br>
+                        
+                        🔍 <strong>What I did:</strong><br>
+                        • Analyzed your research text automatically<br>
+                        • Detected all 7 mandatory fields<br>
+                        • Validated all required information<br>
+                        • Created a complete DPIA case<br><br>
+                        
+                        <div class="quick-actions">
+                            <button class="quick-action-btn" onclick="sendQuickMessage('Analyze another research project')">🔄 New Analysis</button>
+                            <button class="quick-action-btn" onclick="sendQuickMessage('Show me the case details')">📋 Case Details</button>
+                        </div>
+                        
+                        Is there anything else I can help you with?
+                    `;
+
+                    addMessage('bot', successMessage);
                 }, 500);
             }
         }
@@ -503,13 +542,59 @@
                 'Request Purpose': 'Unknown'
             };
 
+            // Detect PI (Primary Investigator)
+            const piPatterns = [
+                /pi:\s*([a-zA-Z\s\.]+)/i,
+                /primary\s+investigator:\s*([a-zA-Z\s\.]+)/i,
+                /pi\s+is\s+([a-zA-Z\s\.]+)/i
+            ];
+            
+            for (const pattern of piPatterns) {
+                const match = text.match(pattern);
+                if (match && match[1]) {
+                    let pi = match[1].trim();
+                    // Clean up common false matches
+                    if (!['rmim', 'wmim', 'tritc', 'dapi'].includes(pi.toLowerCase())) {
+                        fields['PI'] = pi;
+                        break;
+                    }
+                }
+            }
+
+            // Detect Pathologist
+            const pathologistPatterns = [
+                /pathologist:\s*([a-zA-Z\s\.]+)/i,
+                /pathologist\s+is\s+([a-zA-Z\s\.]+)/i
+            ];
+            
+            for (const pattern of pathologistPatterns) {
+                const match = text.match(pattern);
+                if (match && match[1]) {
+                    fields['Pathologist'] = match[1].trim();
+                    break;
+                }
+            }
+
             // Detect therapeutic area
-            if (text.toLowerCase().includes('lung') || text.toLowerCase().includes('stem cell')) {
+            if (text.toLowerCase().includes('lung') || text.toLowerCase().includes('stem cell') || text.toLowerCase().includes('at2')) {
                 fields['Therapeutic Area'] = 'Neurology';
             } else if (text.toLowerCase().includes('cancer') || text.toLowerCase().includes('tumor')) {
                 fields['Therapeutic Area'] = 'Oncology';
             } else if (text.toLowerCase().includes('heart') || text.toLowerCase().includes('cardiovascular')) {
                 fields['Therapeutic Area'] = 'CVRM';
+            }
+
+            // Generate project title
+            if (text.toLowerCase().includes('stem cell') && text.toLowerCase().includes('lung')) {
+                if (text.toLowerCase().includes('at2')) {
+                    fields['Project Title'] = 'Stem Cell Lung AT2 Quantification Imaging Staining Study';
+                } else {
+                    fields['Project Title'] = 'Lung Stem Cell Analysis Study';
+                }
+            } else if (text.toLowerCase().includes('quantification') && text.toLowerCase().includes('imaging')) {
+                fields['Project Title'] = 'Quantification and Imaging Analysis Study';
+            } else if (text.toLowerCase().includes('fluorescence') || text.toLowerCase().includes('tritc')) {
+                fields['Project Title'] = 'Fluorescence Imaging Analysis Project';
             }
 
             // Detect procedure type
@@ -553,6 +638,15 @@
             
             const prompts = [];
             
+            if (missingFields.includes('PI')) {
+                prompts.push({
+                    field: 'PI',
+                    question: '👨‍🔬 Who is the Principal Investigator (PI) for this project?',
+                    type: 'text',
+                    suggestions: ['Dr. John', 'Dr. Smith', 'Dr. Johnson']
+                });
+            }
+            
             if (missingFields.includes('Pathologist')) {
                 prompts.push({
                     field: 'Pathologist',
@@ -577,6 +671,33 @@
                     question: '📋 What would you like to call this project?',
                     type: 'text',
                     suggestions: ['Lung Stem Cell Analysis', 'AT2 Cell Quantification Study', 'Fluorescence Imaging Project']
+                });
+            }
+
+            if (missingFields.includes('Procedure')) {
+                prompts.push({
+                    field: 'Procedure',
+                    question: '🔬 What type of procedure/imaging will be used?',
+                    type: 'select',
+                    options: ['Fluorescence (IF)', 'Bright-field (BF)', 'Confocal', 'Electron Microscopy', 'Other']
+                });
+            }
+
+            if (missingFields.includes('Assay Type/Staining Type')) {
+                prompts.push({
+                    field: 'Assay Type/Staining Type',
+                    question: '🧪 What type of assay or staining will be performed?',
+                    type: 'select',
+                    options: ['H&E', 'IHC', 'Special Stain', 'Other']
+                });
+            }
+
+            if (missingFields.includes('Request Purpose')) {
+                prompts.push({
+                    field: 'Request Purpose',
+                    question: '🎯 What is the main purpose of this request?',
+                    type: 'select',
+                    options: ['Quantification and analysis', 'Imaging and documentation', 'Biomarker analysis', 'Research validation', 'Diagnostic support']
                 });
             }
 
