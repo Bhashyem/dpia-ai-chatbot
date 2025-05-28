@@ -688,12 +688,19 @@
         setTimeout(() => {
             if (document.getElementById('chatMessages').children.length === 2) { // Only initial message
                 addMessage('bot', `
-                    💡 <strong>Demo Mode</strong><br><br>
-                    This is a demonstration of the DPIA Analysis AI Chatbot interface. 
-                    In the full version, this would connect to your Pega system to create real DPIA cases.<br><br>
+                    💡 <strong>Demo Mode - GitHub Pages</strong><br><br>
+                    This is a demonstration of the DPIA Analysis AI Chatbot interface running on GitHub Pages. 
+                    For full functionality with real Pega integration, you need to run the production version locally with the MCP server.<br><br>
+                    
+                    🔧 <strong>To use the full version:</strong><br>
+                    1. Clone the repository<br>
+                    2. Run the MCP server locally<br>
+                    3. Open the production version<br><br>
+                    
                     <div class="quick-actions">
                         <button class="quick-action-btn" onclick="sendQuickMessage('Show me a demo analysis')">🎬 Try Demo</button>
-                        <button class="quick-action-btn" onclick="window.open('https://github.com/your-repo', '_blank')">📱 View on GitHub</button>
+                        <button class="quick-action-btn" onclick="window.open('https://github.com/Bhashyem/dpia-ai-chatbot', '_blank')">📱 View on GitHub</button>
+                        <button class="quick-action-btn" onclick="window.open('https://github.com/Bhashyem/dpia-ai-chatbot/blob/main/README.md', '_blank')">📖 Setup Guide</button>
                     </div>
                 `);
             }
