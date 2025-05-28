@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 DPIA Analysis AI Chatbot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chatbot-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 800px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chatbot-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .chatbot-header h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .chatbot-header p {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+        }
+
+        .message.user .message-content {
+            background: #007bff;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e1e5e9;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            margin: 0 8px;
+        }
+
+        .message.user .message-avatar {
+            background: #007bff;
+            color: white;
+        }
+
+        .message.bot .message-avatar {
+            background: #667eea;
+            color: white;
+        }
+
+        .interactive-prompt {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+
+        .prompt-question {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #0056b3;
+        }
+
+        .prompt-options {
+            margin: 10px 0;
+        }
+
+        .prompt-option {
+            display: block;
+            margin: 5px 0;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .prompt-option:hover {
+            background: #cce7ff;
+        }
+
+        .prompt-option input[type="radio"] {
+            margin-right: 8px;
+        }
+
+        .prompt-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            margin: 8px 0;
+        }
+
+        .prompt-suggestions {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .submit-responses-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+
+        .submit-responses-btn:hover {
+            background: #218838;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e1e5e9;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 20px;
+            font-size: 14px;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .chat-input:focus {
+            border-color: #667eea;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            transition: transform 0.2s;
+        }
+
+        .send-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 5px;
+            color: #666;
+            font-style: italic;
+            margin: 10px 0;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 3px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: #666;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+            }
+            30% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .field-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        .field-item {
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            text-align: center;
+        }
+
+        .field-detected {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .field-missing {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .case-success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 8px;
+            margin: 10px 0;
+            flex-wrap: wrap;
+        }
+
+        .quick-action-btn {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            color: #495057;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-action-btn:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+        }
+
+        @media (max-width: 768px) {
+            .chatbot-container {
+                height: 90vh;
+                margin: 10px;
+            }
+            
+            .message-content {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <div class="chatbot-header">
+            <h1>🤖 DPIA Analysis AI Chatbot</h1>
+            <p>Intelligent assistant for analyzing research text and creating validated DPIA cases</p>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">
+                    <strong>Hello! I'm your DPIA Analysis AI assistant.</strong><br><br>
+                    I can help you analyze research text and create validated DPIA cases. Just paste your research description and I'll:
+                    <br>• 🔍 Automatically detect key information
+                    <br>• 💬 Ask interactive questions for missing details
+                    <br>• ✅ Validate all mandatory fields
+                    <br>• 🏢 Create complete DPIA cases
+                    <br><br>
+                    <div class="quick-actions">
+                        <button class="quick-action-btn" onclick="sendQuickMessage('Analyze my lung stem cell research')">🫁 Lung Research</button>
+                        <button class="quick-action-btn" onclick="sendQuickMessage('Help me create a DPIA case')">📋 Create DPIA</button>
+                        <button class="quick-action-btn" onclick="sendQuickMessage('What information do you need?')">❓ What info needed?</button>
+                    </div>
+                    <strong>What research would you like me to analyze?</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="message-avatar">🤖</div>
+            <span>AI is thinking</span>
+            <div class="typing-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <div class="input-container">
+                <textarea 
+                    id="chatInput" 
+                    class="chat-input" 
+                    placeholder="Describe your research or ask me anything..."
+                    rows="1"
+                ></textarea>
+                <button id="sendBtn" class="send-btn" onclick="sendMessage()">
+                    ➤
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            // For local development
+            API_URL: 'http://localhost:8080/tools/call',
+            // For GitHub Pages deployment, you would need to deploy the backend separately
+            // API_URL: 'https://your-backend-url.com/tools/call'
+        };
+
+        let currentConversation = [];
+        let awaitingPromptResponses = false;
+        let currentPrompts = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatInput = document.getElementById('chatInput');
+            
+            // Auto-resize textarea
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+
+            // Send on Enter (but allow Shift+Enter for new lines)
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        });
+
+        function sendQuickMessage(message) {
+            document.getElementById('chatInput').value = message;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // Add user message to chat
+            addMessage('user', message);
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Show typing indicator
+            showTyping();
+
+            try {
+                // Simulate AI analysis
+                await analyzeWithAI(message);
+            } catch (error) {
+                hideTyping();
+                addMessage('bot', `❌ I encountered an error: ${error.message}<br><br>💡 <strong>Note:</strong> This is a demo version. For full functionality, you would need to connect to the DPIA Analysis backend server.`);
+            }
+        }
+
+        async function analyzeWithAI(researchText) {
+            // Simulate AI analysis with realistic responses
+            await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate processing time
+            
+            hideTyping();
+
+            // Simulate field detection
+            const detectedFields = simulateFieldDetection(researchText);
+            const missingFields = ['Pathologist', 'Therapeutic Area', 'Project Title'];
+            
+            // Create analysis response
+            let response = `🔍 <strong>Analysis Complete!</strong><br><br>`;
+            response += `I've analyzed your research text (${researchText.length} characters) and here's what I found:<br><br>`;
+            
+            // Show detected fields
+            response += `<div class="field-status">`;
+            Object.entries(detectedFields).forEach(([field, value]) => {
+                const isDetected = value !== "Unknown" && value;
+                response += `<div class="field-item ${isDetected ? 'field-detected' : 'field-missing'}">
+                    <strong>${field}:</strong><br>${isDetected ? '✅' : '❌'} ${value}
+                </div>`;
+            });
+            response += `</div>`;
+
+            response += `<br>🤖 <strong>I need to ask you about ${missingFields.length} missing fields to create a complete DPIA case:</strong>`;
+
+            addMessage('bot', response);
+
+            // Add interactive prompts
+            if (missingFields.length > 0) {
+                setTimeout(() => {
+                    showInteractivePrompts(missingFields);
+                }, 500);
+            }
+        }
+
+        function simulateFieldDetection(text) {
+            const fields = {
+                'Therapeutic Area': 'Unknown',
+                'Procedure': 'Unknown',
+                'Assay Type/Staining Type': 'Unknown',
+                'PI': 'Unknown',
+                'Pathologist': 'Unknown',
+                'Project Title': 'Unknown',
+                'Request Purpose': 'Unknown'
+            };
+
+            // Simulate detection logic
+            if (text.toLowerCase().includes('tritc') || text.toLowerCase().includes('dapi')) {
+                fields['Procedure'] = 'Fluorescence (IF)';
+                fields['Assay Type/Staining Type'] = 'Other';
+            }
+            
+            if (text.toLowerCase().includes('quantification')) {
+                fields['Request Purpose'] = 'Quantification and analysis';
+            }
+
+            if (text.toLowerCase().includes('lung') || text.toLowerCase().includes('stem cell')) {
+                // Could detect neurology, but we'll leave it for interactive prompt
+            }
+
+            return fields;
+        }
+
+        function showInteractivePrompts(missingFields) {
+            let promptsHtml = `💬 <strong>I need some additional information:</strong><br><br>`;
+            
+            const prompts = [];
+            
+            if (missingFields.includes('Pathologist')) {
+                prompts.push({
+                    field: 'Pathologist',
+                    question: '🔬 Who is the pathologist for this project?',
+                    type: 'text',
+                    suggestions: ['Dr. Bhashyam', 'Dr. Smith', 'Dr. Johnson']
+                });
+            }
+            
+            if (missingFields.includes('Therapeutic Area')) {
+                prompts.push({
+                    field: 'Therapeutic Area',
+                    question: '🏥 Which therapeutic area does this research belong to?',
+                    type: 'select',
+                    options: ['CVRM', 'Neurology', 'Oncology', 'Ophthalmology', 'Infectious Diseases', 'Immunology', 'Unknown']
+                });
+            }
+            
+            if (missingFields.includes('Project Title')) {
+                prompts.push({
+                    field: 'Project Title',
+                    question: '📋 What would you like to call this project?',
+                    type: 'text',
+                    suggestions: ['Lung Stem Cell Analysis', 'AT2 Cell Quantification Study', 'Fluorescence Imaging Project']
+                });
+            }
+
+            currentPrompts = prompts;
+            
+            prompts.forEach((prompt, index) => {
+                promptsHtml += `<div class="interactive-prompt">
+                    <div class="prompt-question">${prompt.question}</div>`;
+                
+                if (prompt.type === 'select') {
+                    promptsHtml += `<div class="prompt-options">`;
+                    prompt.options.forEach(option => {
+                        promptsHtml += `<label class="prompt-option">
+                            <input type="radio" name="prompt_${prompt.field}" value="${option}">
+                            ${option}
+                        </label>`;
+                    });
+                    promptsHtml += `</div>`;
+                } else if (prompt.type === 'text') {
+                    promptsHtml += `<input type="text" class="prompt-input" id="prompt_${prompt.field}" placeholder="Enter ${prompt.field.toLowerCase()}...">`;
+                    if (prompt.suggestions) {
+                        promptsHtml += `<div class="prompt-suggestions">💡 Suggestions: ${prompt.suggestions.join(', ')}</div>`;
+                    }
+                }
+                
+                promptsHtml += `</div>`;
+            });
+            
+            promptsHtml += `<button class="submit-responses-btn" onclick="submitPromptResponses()">
+                🚀 Submit Responses & Create DPIA Case
+            </button>`;
+
+            addMessage('bot', promptsHtml);
+            awaitingPromptResponses = true;
+        }
+
+        async function submitPromptResponses() {
+            const responses = {};
+            let allAnswered = true;
+            
+            currentPrompts.forEach(prompt => {
+                if (prompt.type === 'select') {
+                    const selected = document.querySelector(`input[name="prompt_${prompt.field}"]:checked`);
+                    if (selected) {
+                        responses[prompt.field] = selected.value;
+                    } else {
+                        allAnswered = false;
+                    }
+                } else if (prompt.type === 'text') {
+                    const input = document.getElementById(`prompt_${prompt.field}`);
+                    if (input && input.value.trim()) {
+                        responses[prompt.field] = input.value.trim();
+                    } else {
+                        allAnswered = false;
+                    }
+                }
+            });
+
+            if (!allAnswered) {
+                addMessage('bot', '⚠️ Please answer all questions before submitting.');
+                return;
+            }
+
+            // Show user's responses
+            let responseText = '📝 <strong>My responses:</strong><br>';
+            Object.entries(responses).forEach(([field, value]) => {
+                responseText += `• ${field}: ${value}<br>`;
+            });
+            addMessage('user', responseText);
+
+            // Show processing
+            showTyping();
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideTyping();
+
+            // Simulate case creation
+            const caseId = 'C-' + Math.floor(Math.random() * 90000 + 10000);
+            
+            const successMessage = `
+                <div class="case-success">
+                    <strong>🎉 DPIA Case Created Successfully!</strong><br>
+                    <strong>Case ID:</strong> ${caseId}<br>
+                    <strong>Status:</strong> Validated & Complete<br>
+                    <strong>Fields:</strong> 7/7 Complete
+                </div>
+                
+                <strong>Perfect! I've successfully created your DPIA case with all the information we gathered together!</strong><br><br>
+                
+                🔍 <strong>What I did:</strong><br>
+                • Analyzed your research text automatically<br>
+                • Asked for missing mandatory information<br>
+                • Validated all required fields<br>
+                • Created a complete DPIA case<br><br>
+                
+                <div class="quick-actions">
+                    <button class="quick-action-btn" onclick="sendQuickMessage('Analyze another research project')">🔄 New Analysis</button>
+                    <button class="quick-action-btn" onclick="sendQuickMessage('Show me the case details')">📋 Case Details</button>
+                </div>
+                
+                Is there anything else I can help you with?
+            `;
+
+            addMessage('bot', successMessage);
+            awaitingPromptResponses = false;
+            currentPrompts = [];
+        }
+
+        function addMessage(sender, content) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+            
+            const avatar = sender === 'user' ? '👤' : '🤖';
+            
+            messageDiv.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">${content}</div>
+            `;
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function showTyping() {
+            document.getElementById('typingIndicator').style.display = 'flex';
+            document.getElementById('sendBtn').disabled = true;
+            
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideTyping() {
+            document.getElementById('typingIndicator').style.display = 'none';
+            document.getElementById('sendBtn').disabled = false;
+        }
+
+        // Demo mode notification
+        setTimeout(() => {
+            if (document.getElementById('chatMessages').children.length === 2) { // Only initial message
+                addMessage('bot', `
+                    💡 <strong>Demo Mode</strong><br><br>
+                    This is a demonstration of the DPIA Analysis AI Chatbot interface. 
+                    In the full version, this would connect to your Pega system to create real DPIA cases.<br><br>
+                    <div class="quick-actions">
+                        <button class="quick-action-btn" onclick="sendQuickMessage('Show me a demo analysis')">🎬 Try Demo</button>
+                        <button class="quick-action-btn" onclick="window.open('https://github.com/your-repo', '_blank')">📱 View on GitHub</button>
+                    </div>
+                `);
+            }
+        }, 10000);
+    </script>
+</body>
+</html> 

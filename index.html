@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 DPIA Analysis AI Chatbot</title>
+    <meta name="description" content="Intelligent conversational assistant for analyzing research text and creating validated DPIA cases">
+    <meta name="keywords" content="AI, chatbot, DPIA, research analysis, Pega, healthcare, pathology">
+    <meta name="author" content="DPIA Analysis Team">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://your-username.github.io/dpia-analysis-chatbot/">
+    <meta property="og:title" content="🤖 DPIA Analysis AI Chatbot">
+    <meta property="og:description" content="Intelligent conversational assistant for analyzing research text and creating validated DPIA cases">
+    <meta property="og:image" content="https://your-username.github.io/dpia-analysis-chatbot/assets/preview.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://your-username.github.io/dpia-analysis-chatbot/">
+    <meta property="twitter:title" content="🤖 DPIA Analysis AI Chatbot">
+    <meta property="twitter:description" content="Intelligent conversational assistant for analyzing research text and creating validated DPIA cases">
+    <meta property="twitter:image" content="https://your-username.github.io/dpia-analysis-chatbot/assets/preview.png">
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 20px;
+        }
+        
+        .landing-container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            max-width: 600px;
+            width: 100%;
+        }
+        
+        .logo {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 2.2em;
+        }
+        
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+            line-height: 1.6;
+        }
+        
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .feature {
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .feature h3 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+        }
+        
+        .feature p {
+            color: #666;
+            font-size: 0.9em;
+            margin: 0;
+        }
+        
+        .cta-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            margin: 20px 10px;
+            transition: transform 0.2s;
+        }
+        
+        .cta-button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .secondary-button {
+            background: transparent;
+            color: #667eea;
+            border: 2px solid #667eea;
+        }
+        
+        .secondary-button:hover {
+            background: #667eea;
+            color: white;
+        }
+        
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        
+        .stat {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        @media (max-width: 768px) {
+            .landing-container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .features {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="landing-container">
+        <div class="logo">🤖</div>
+        <h1>DPIA Analysis AI Chatbot</h1>
+        <p class="subtitle">
+            Intelligent conversational assistant for analyzing research text and creating validated 
+            Data Privacy Impact Assessment (DPIA) cases with automatic field detection and interactive guidance.
+        </p>
+        
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🔍</div>
+                <h3>Smart Analysis</h3>
+                <p>Automatically detects therapeutic areas, procedures, and key information from research text</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">💬</div>
+                <h3>Interactive Chat</h3>
+                <p>Conversational interface that guides you through missing information collection</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">✅</div>
+                <h3>Validation</h3>
+                <p>Ensures all mandatory fields are completed before creating DPIA cases</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🏢</div>
+                <h3>Pega Integration</h3>
+                <p>Seamlessly creates validated cases in your Pega system</p>
+            </div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number">7</div>
+                <div class="stat-label">Mandatory Fields</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">95%</div>
+                <div class="stat-label">Detection Accuracy</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number">2min</div>
+                <div class="stat-label">Average Time</div>
+            </div>
+        </div>
+        
+        <div>
+            <a href="dpia_chatbot.html" class="cta-button">
+                🚀 Launch Chatbot
+            </a>
+            <a href="https://github.com/your-username/dpia-analysis-chatbot" class="cta-button secondary-button" target="_blank">
+                📱 View on GitHub
+            </a>
+        </div>
+        
+        <p style="margin-top: 30px; color: #666; font-size: 0.9em;">
+            💡 <strong>Demo Mode:</strong> This version simulates AI analysis. 
+            For full Pega integration, deploy with the backend server.
+        </p>
+    </div>
+
+    <script>
+        // Auto-redirect to chatbot after 5 seconds if no interaction
+        let redirectTimer = setTimeout(() => {
+            window.location.href = 'dpia_chatbot.html';
+        }, 10000);
+
+        // Cancel redirect if user interacts with the page
+        document.addEventListener('click', () => {
+            clearTimeout(redirectTimer);
+        });
+
+        document.addEventListener('scroll', () => {
+            clearTimeout(redirectTimer);
+        });
+
+        // Add some interactive elements
+        document.querySelectorAll('.feature').forEach(feature => {
+            feature.addEventListener('mouseenter', () => {
+                feature.style.transform = 'translateY(-5px)';
+                feature.style.transition = 'transform 0.3s ease';
+            });
+            
+            feature.addEventListener('mouseleave', () => {
+                feature.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html> 

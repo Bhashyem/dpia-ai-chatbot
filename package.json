@@ -1,0 +1,47 @@
+{
+  "name": "dpia-analysis-chatbot",
+  "version": "1.0.0",
+  "description": "🤖 Intelligent conversational assistant for analyzing research text and creating validated DPIA cases",
+  "main": "dpia_chatbot.html",
+  "scripts": {
+    "start": "python simple_mcp_server.py",
+    "test": "python test_interactive_bot.py",
+    "dev": "python simple_mcp_server.py",
+    "build": "echo 'No build step required for static deployment'",
+    "deploy": "echo 'Deploy to GitHub Pages by enabling Pages in repository settings'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/your-username/dpia-analysis-chatbot.git"
+  },
+  "keywords": [
+    "ai",
+    "chatbot",
+    "dpia",
+    "pega",
+    "research",
+    "analysis",
+    "healthcare",
+    "pathology",
+    "automation",
+    "nlp"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/your-username/dpia-analysis-chatbot/issues"
+  },
+  "homepage": "https://your-username.github.io/dpia-analysis-chatbot/",
+  "engines": {
+    "python": ">=3.9.0"
+  },
+  "dependencies": {
+    "python": ">=3.9.0"
+  },
+  "devDependencies": {},
+  "browserslist": [
+    "> 1%",
+    "last 2 versions",
+    "not dead"
+  ]
+} 
