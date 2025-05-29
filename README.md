@@ -1,282 +1,321 @@
-# 🤖 DPIA Analysis AI Chatbot
+# 🤖 Claude-Enhanced DPIA Chatbot
 
-An intelligent conversational assistant for analyzing research text and creating validated Data Privacy Impact Assessment (DPIA) cases. This AI-powered chatbot automatically detects key information from research descriptions and guides users through an interactive process to create complete DPIA cases.
+An intelligent Data Privacy Impact Assessment (DPIA) chatbot that combines **Claude LLM** with **Pega case management** for automated biomedical research analysis and compliance workflows.
 
-## ✨ Features
+## 🌟 Features
 
-- **🔍 Intelligent Text Analysis**: Automatically detects therapeutic areas, procedures, assay types, and other key information from research text
-- **💬 Interactive Conversations**: Conversational interface that asks contextual questions for missing information
-- **✅ Field Validation**: Ensures all mandatory fields are completed before case creation
-- **🏢 Pega Integration**: Creates validated DPIA cases in Pega systems
-- **📱 Modern UI**: Beautiful, responsive web interface optimized for all devices
-- **🎯 Smart Recommendations**: Provides intelligent suggestions based on text analysis
+### 🧠 **Claude AI Integration**
+- **Intelligent Text Analysis**: Automatically extracts DPIA fields from research text
+- **Conversational Interface**: Natural language interaction with Claude LLM
+- **Field Enhancement**: Smart detection and validation of mandatory fields
+- **Confidence Scoring**: AI confidence levels for extracted information
 
-## 🚀 Live Demo
+### 🔬 **Biomedical Research Focus**
+- **Therapeutic Area Detection**: CVRM, Neurology, Oncology, Ophthalmology, etc.
+- **Procedure Classification**: Bright-field (BF), Fluorescence (IF), BF+IF
+- **Assay Type Recognition**: H&E, IHC, Special Stain, and custom staining
+- **Research Context Understanding**: Imaging, time-lapse, molecular distribution
 
-**[Try the Live Demo](https://your-username.github.io/dpia-analysis-chatbot/dpia_chatbot.html)**
+### 🏢 **Enterprise Integration**
+- **Pega Case Management**: Seamless DPIA case creation in Pega systems
+- **Dual Workflow Support**: AI-powered analysis + traditional questionnaire
+- **Session Management**: Persistent conversation state and field tracking
+- **API-First Design**: RESTful endpoints for integration
 
-*Note: The demo version simulates the AI analysis. For full Pega integration, deploy with the backend server.*
-
-## 🛠️ Technology Stack
-
-- **Frontend**: Pure HTML5, CSS3, JavaScript (ES6+)
-- **Backend**: Python 3.9+ with FastAPI
-- **AI Analysis**: Custom NLP algorithms for field detection
-- **Integration**: Pega REST API
-- **Deployment**: GitHub Pages compatible
-
-## 📋 Detected Fields
-
-The AI chatbot automatically detects and validates these mandatory fields:
-
-1. **👨‍🔬 Primary Investigator (PI)**: Project lead researcher
-2. **🔬 Pathologist**: Assigned pathologist for the study
-3. **🏥 Therapeutic Area**: Research domain (CVRM, Neurology, Oncology, etc.)
-4. **🔬 Procedure**: Analysis type (Bright-field, Fluorescence, Combined)
-5. **🧪 Assay Type/Staining Type**: Staining methodology (H&E, IHC, Special Stain, Other)
-6. **📋 Project Title**: Descriptive project name
-7. **🎯 Request Purpose**: Objective of the analysis
-
-## 🎮 How to Use
-
-1. **Start Conversation**: Open the chatbot and describe your research
-2. **AI Analysis**: The bot automatically detects information from your text
-3. **Interactive Questions**: Answer any follow-up questions for missing fields
-4. **Validation**: All mandatory fields are validated
-5. **Case Creation**: Complete DPIA case is created in Pega
-
-### Example Research Text
-
-```
-We have 4 groups (healthy, injured+vehicle control, treatment 1(Rmim), treatment 2 (Wmim).
-Lung stem cells (AT2-TRITC) and total cells (DAPI) are stained. N=9-10 per group were 
-stained and need imaging and quantification. I am interested in imaging of AT2 (TRITC) 
-stem cells and DAPI and quantification of: 1. # of AT2 cells per lung section 
-2. # of AT2 cells normalized by total area of lung section 3. # of AT2 cells 
-normalized by # of DAPI cells per lung section
-```
+### 🎯 **Mandatory Field Extraction**
+- Principal Investigator (PI)
+- Pathologist
+- Therapeutic Area
+- Procedure Type
+- Assay/Staining Type
+- Project Title
+- Request Purpose
 
 ## 🚀 Quick Start
 
-### Option 1: GitHub Pages (Demo Mode)
+### Prerequisites
+- Python 3.9+
+- Anthropic API key (Claude)
+- Pega system access (optional for demo mode)
 
-1. Fork this repository
-2. Enable GitHub Pages in repository settings
-3. Visit `https://your-username.github.io/dpia-analysis-chatbot/dpia_chatbot.html`
+### Installation
 
-### Option 2: Full Deployment with Backend
+1. **Clone the repository**
+```bash
+git clone <your-repo-url>
+cd pega_model_context_server
+```
 
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/your-username/dpia-analysis-chatbot.git
-   cd dpia-analysis-chatbot
-   ```
+2. **Create virtual environment**
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+```
 
-2. **Set up Python environment**:
-   ```bash
-   python3 -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   ```
+3. **Install dependencies**
+```bash
+pip install -r requirements.txt
+```
 
-3. **Configure environment variables**:
-   ```bash
-   cp .env.example .env
-   # Edit .env with your Pega credentials
-   ```
+4. **Configure environment**
+```bash
+cp .env.example .env
+# Edit .env with your API keys and Pega credentials
+```
 
-4. **Start the backend server**:
-   ```bash
-   python simple_mcp_server.py
-   ```
+5. **Start the server**
+```bash
+python main_claude.py
+```
 
-5. **Open the web interface**:
-   - Navigate to `http://localhost:8080/web`
-   - Or open `dpia_chatbot.html` in your browser
+6. **Access the interface**
+- Web UI: http://localhost:8080
+- API Documentation: http://localhost:8080/docs
+- Health Check: http://localhost:8080/health
 
-## ⚙️ Configuration
+## 🔧 Configuration
 
-### Environment Variables
+### Environment Variables (.env)
+```bash
+# Claude AI Configuration
+ANTHROPIC_API_KEY=your_claude_api_key_here
 
-Create a `.env` file with your Pega configuration:
-
-```env
+# Pega System Configuration
 PEGA_BASE_URL=https://your-pega-instance.pegacloud.net/prweb/api/v1
-PEGA_USERNAME=your-username
-PEGA_PASSWORD=your-password
+PEGA_USERNAME=your_username
+PEGA_PASSWORD=your_password
 ```
 
-### API Configuration
+## 📚 API Endpoints
 
-Update the `CONFIG` object in `dpia_chatbot.html` for your deployment:
+### 🤖 **Claude-Enhanced Endpoints**
 
-```javascript
-const CONFIG = {
-    // For local development
-    API_URL: 'http://localhost:8080/tools/call',
-    // For production deployment
-    // API_URL: 'https://your-backend-url.com/tools/call'
-};
-```
-
-## 📁 Project Structure
-
-```
-dpia-analysis-chatbot/
-├── dpia_chatbot.html          # Main chatbot interface
-├── simple_mcp_server.py       # Backend API server
-├── scanning_summarizer.py     # AI analysis engine
-├── requirements.txt           # Python dependencies
-├── .env.example              # Environment template
-├── README.md                 # This file
-└── docs/                     # Documentation
-    ├── api.md               # API documentation
-    ├── deployment.md        # Deployment guide
-    └── screenshots/         # Interface screenshots
-```
-
-## 🔧 API Endpoints
-
-### Analyze and Create DPIA
-
-```http
-POST /tools/call
-Content-Type: application/json
-
+#### Chat with Claude
+```bash
+POST /chat
 {
-  "name": "analyze_and_create_dpia",
-  "arguments": {
-    "research_text": "Your research description...",
-    "auto_create": true,
-    "prompt_responses": {
-      "Pathologist": "Dr. Smith",
-      "Therapeutic Area": "Neurology"
-    }
-  }
+  "message": "Leica SP8 - Time-lapse imaging to monitor small molecule distribution",
+  "user_id": "optional_user_id",
+  "session_id": "optional_session_id"
 }
 ```
 
-### Response Format
-
-```json
+#### Analyze Research Text
+```bash
+POST /analyze
 {
-  "success": true,
-  "analysis": {
-    "detected_fields": {
-      "Therapeutic Area": "Neurology",
-      "Procedure": "Fluorescence (IF)",
-      "Request Purpose": "Quantification and analysis"
-    },
-    "interactive_prompts": [...]
+  "research_text": "Your research description here",
+  "enhance_fields": true
+}
+```
+
+#### Create DPIA Case
+```bash
+POST /create-case
+{
+  "detected_fields": {
+    "PI": "Dr. Smith",
+    "Pathologist": "Dr. Johnson",
+    "Therapeutic Area": "Neurology",
+    "Procedure": "Fluorescence (IF)",
+    "Assay Type/Staining Type": "Time-lapse imaging",
+    "Project Title": "Molecular Distribution Study",
+    "Request Purpose": "Monitor small molecule distribution"
   },
-  "case_created": true,
-  "case_id": "C-16371"
+  "research_text": "Original research text"
 }
 ```
 
-## 🎨 Customization
+### 🏢 **Traditional Endpoints**
 
-### Styling
-
-The chatbot uses CSS custom properties for easy theming:
-
-```css
-:root {
-  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --message-user-bg: #007bff;
-  --message-bot-bg: white;
-  --border-radius: 18px;
+#### Questionnaire Flow
+```bash
+POST /question
+{
+  "current_state": "start",
+  "answer": "Yes",
+  "user_id": "user123"
 }
 ```
 
-### AI Detection Logic
+#### Direct Case Creation
+```bash
+POST /cases
+{
+  "caseTypeID": "Roche-Pathworks-Work-DPIA",
+  "processID": "pyStartCase",
+  "content": {}
+}
+```
 
-Customize field detection in `scanning_summarizer.py`:
+## 🎯 Usage Examples
 
+### Example 1: AI-Powered Analysis
 ```python
-def detect_therapeutic_area(self, text):
-    # Add your custom detection logic
-    keywords = {
-        'neurology': ['brain', 'neural', 'neuron'],
-        'oncology': ['cancer', 'tumor', 'malignant']
-    }
-    # Implementation...
+import requests
+
+# Analyze research text with Claude
+response = requests.post("http://localhost:8080/analyze", json={
+    "research_text": "Leica SP8 confocal microscopy for TRITC-stained lung tissue analysis in CVRM research",
+    "enhance_fields": True
+})
+
+analysis = response.json()
+print(f"Detected fields: {analysis['detected_fields']}")
+print(f"Missing fields: {analysis['missing_fields']}")
 ```
+
+### Example 2: Conversational Interface
+```python
+# Chat with Claude about DPIA requirements
+response = requests.post("http://localhost:8080/chat", json={
+    "message": "I need help creating a DPIA for my stem cell imaging study",
+    "user_id": "researcher123"
+})
+
+print(response.json()["response"])
+```
+
+### Example 3: Complete Workflow
+```python
+# 1. Analyze text
+analysis = requests.post("http://localhost:8080/analyze", json={
+    "research_text": "Time-lapse imaging study of AT2 cells in lung tissue"
+}).json()
+
+# 2. Create case if all fields detected
+if not analysis["missing_fields"]:
+    case = requests.post("http://localhost:8080/create-case", json={
+        "detected_fields": analysis["detected_fields"],
+        "research_text": "Time-lapse imaging study of AT2 cells in lung tissue"
+    }).json()
+    print(f"Created case: {case['ID']}")
+```
+
+## 🏗️ Architecture
+
+```
+┌─────────────────┐    ┌──────────────────┐    ┌─────────────────┐
+│   Web Frontend  │    │   FastAPI Server │    │   Claude LLM    │
+│                 │◄──►│                  │◄──►│                 │
+│ - Chat Interface│    │ - Session Mgmt   │    │ - Text Analysis │
+│ - Field Forms   │    │ - API Endpoints  │    │ - Field Extract │
+└─────────────────┘    └──────────────────┘    └─────────────────┘
+                                │
+                                ▼
+                       ┌─────────────────┐
+                       │   Pega System   │
+                       │                 │
+                       │ - Case Creation │
+                       │ - Workflow Mgmt │
+                       └─────────────────┘
+```
+
+## 🔍 Key Components
+
+### 1. **Claude Integration** (`claude_integration.py`)
+- `ClaudeIntegration`: Main class for AI interactions
+- `AnalysisResult`: Structured analysis results
+- Field detection and enhancement algorithms
+
+### 2. **FastAPI Server** (`main_claude.py`)
+- RESTful API endpoints
+- Session management
+- Pega integration
+- Error handling and fallbacks
+
+### 3. **Web Interface** (`dpia_chatbot_claude.html`)
+- Modern, responsive UI
+- Real-time chat interface
+- Field validation and forms
+- Progress tracking
+
+### 4. **Legacy Support** (`scanning_summarizer.py`)
+- Traditional keyword-based analysis
+- Fallback when Claude is unavailable
+- Interactive field prompting
 
 ## 🧪 Testing
 
-### Run Backend Tests
-
+### Run Analysis Tests
 ```bash
 python test_interactive_bot.py
 ```
 
-### Manual Testing Scenarios
+### Test API Endpoints
+```bash
+# Health check
+curl http://localhost:8080/health
 
-1. **Complete Detection**: Text with all fields detectable
-2. **Partial Detection**: Text requiring interactive prompts
-3. **Error Handling**: Invalid inputs and network errors
-4. **Mobile Responsiveness**: Test on various screen sizes
+# Analyze sample text
+curl -X POST http://localhost:8080/analyze \
+  -H "Content-Type: application/json" \
+  -d '{"research_text": "TRITC staining of lung tissue for CVRM research"}'
+```
 
-## 📊 Analytics & Monitoring
-
-The chatbot includes built-in analytics for:
-
-- **Field Detection Accuracy**: Track automatic detection rates
-- **User Interaction Patterns**: Monitor conversation flows
-- **Case Creation Success**: Measure completion rates
-- **Performance Metrics**: Response times and error rates
+### Interactive Testing
+```bash
+python test_full_interactive_flow.py
+```
 
 ## 🔒 Security & Privacy
 
-- **Data Encryption**: All API communications use HTTPS
-- **Authentication**: Secure Pega API authentication
-- **Input Validation**: Comprehensive input sanitization
-- **Privacy Compliance**: GDPR and HIPAA considerations
+- **API Key Protection**: Environment variables for sensitive data
+- **Input Validation**: Pydantic models for request validation
+- **Error Handling**: Graceful fallbacks and error messages
+- **Session Isolation**: User-specific session management
+
+## 🚀 Deployment
+
+### Local Development
+```bash
+python main_claude.py
+```
+
+### Production Deployment
+```bash
+# Using uvicorn directly
+uvicorn main_claude:app --host 0.0.0.0 --port 8080
+
+# Using Docker (create Dockerfile)
+docker build -t dpia-chatbot .
+docker run -p 8080:8080 dpia-chatbot
+```
+
+## 📈 Performance Features
+
+- **Async Processing**: Non-blocking API calls
+- **Session Caching**: Persistent conversation state
+- **Fallback Mechanisms**: Graceful degradation when services unavailable
+- **Confidence Scoring**: Quality assessment of AI extractions
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit changes: `git commit -m 'Add amazing feature'`
-4. Push to branch: `git push origin feature/amazing-feature`
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-### Development Guidelines
-
-- Follow JavaScript ES6+ standards
-- Use semantic HTML5 elements
-- Maintain responsive design principles
-- Include comprehensive error handling
-- Write clear, documented code
-
-## 📝 License
+## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 🆘 Support
 
-- **Documentation**: [Wiki](https://github.com/your-username/dpia-analysis-chatbot/wiki)
-- **Issues**: [GitHub Issues](https://github.com/your-username/dpia-analysis-chatbot/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/your-username/dpia-analysis-chatbot/discussions)
+- **Documentation**: Check the `/docs` endpoint when server is running
+- **Issues**: Create GitHub issues for bugs or feature requests
+- **API Reference**: Available at `http://localhost:8080/docs`
 
 ## 🎯 Roadmap
 
-- [ ] **Multi-language Support**: Internationalization
-- [ ] **Voice Interface**: Speech-to-text integration
-- [ ] **Advanced AI**: Machine learning improvements
-- [ ] **Mobile App**: Native mobile applications
-- [ ] **Batch Processing**: Multiple case creation
-- [ ] **Dashboard**: Analytics and reporting interface
-
-## 🏆 Acknowledgments
-
-- **Pega Platform**: For robust case management capabilities
-- **FastAPI**: For excellent Python web framework
-- **Modern Web Standards**: For responsive, accessible design
+- [ ] Multi-language support
+- [ ] Advanced analytics dashboard
+- [ ] Batch processing capabilities
+- [ ] Integration with additional LLM providers
+- [ ] Enhanced security features
+- [ ] Mobile-responsive improvements
 
 ---
 
-**Made with ❤️ for streamlined DPIA case creation**
-
-*For questions or support, please open an issue or contact the development team.* 
+**Built with ❤️ for biomedical research compliance and automation** 

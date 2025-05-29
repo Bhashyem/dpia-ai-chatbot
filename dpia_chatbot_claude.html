@@ -1,0 +1,1007 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🤖 DPIA Analysis AI Chatbot - Claude Enhanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .chatbot-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            width: 100%;
+            max-width: 900px;
+            height: 85vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chatbot-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .chatbot-header h1 {
+            font-size: 1.8em;
+            margin-bottom: 5px;
+        }
+
+        .chatbot-header p {
+            opacity: 0.9;
+            font-size: 0.9em;
+        }
+
+        .claude-badge {
+            background: rgba(255,255,255,0.2);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            margin-top: 8px;
+            display: inline-block;
+        }
+
+        .connection-status {
+            padding: 10px;
+            text-align: center;
+            font-size: 0.9em;
+            border-bottom: 1px solid #e1e5e9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .connection-status.connected {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .connection-status.disconnected {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .claude-status {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8f9fa;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: flex-start;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message-content {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            word-wrap: break-word;
+            line-height: 1.4;
+        }
+
+        .message.user .message-content {
+            background: #007bff;
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.bot .message-content {
+            background: white;
+            color: #333;
+            border: 1px solid #e1e5e9;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            margin: 0 8px;
+            flex-shrink: 0;
+        }
+
+        .message.user .message-avatar {
+            background: #007bff;
+            color: white;
+        }
+
+        .message.bot .message-avatar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            position: relative;
+        }
+
+        .claude-indicator {
+            position: absolute;
+            bottom: -2px;
+            right: -2px;
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .analysis-result {
+            background: #f0f8ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+
+        .analysis-header {
+            font-weight: 600;
+            color: #0056b3;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .field-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 10px;
+            margin: 15px 0;
+        }
+
+        .field-item {
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .field-detected {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .field-missing {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .field-uncertain {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+
+        .confidence-score {
+            font-size: 0.8em;
+            opacity: 0.8;
+            margin-top: 4px;
+        }
+
+        .interactive-prompt {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 12px;
+            padding: 15px;
+            margin: 10px 0;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .prompt-question {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #0056b3;
+        }
+
+        .prompt-options {
+            margin: 10px 0;
+        }
+
+        .prompt-option {
+            display: block;
+            margin: 5px 0;
+            cursor: pointer;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+
+        .prompt-option:hover {
+            background: #cce7ff;
+            transform: translateX(4px);
+        }
+
+        .prompt-option input[type="radio"] {
+            margin-right: 8px;
+        }
+
+        .prompt-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            margin: 8px 0;
+            transition: border-color 0.2s;
+        }
+
+        .prompt-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .prompt-suggestions {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .submit-responses-btn {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 10px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .submit-responses-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e1e5e9;
+        }
+
+        .input-container {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #e1e5e9;
+            border-radius: 20px;
+            font-size: 14px;
+            resize: none;
+            min-height: 44px;
+            max-height: 120px;
+            font-family: inherit;
+            transition: border-color 0.2s;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .send-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .send-btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        }
+
+        .send-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            padding: 10px 0;
+        }
+
+        .typing-dots {
+            display: flex;
+            gap: 4px;
+            margin-left: 8px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #667eea;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes typing {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .quick-actions {
+            margin: 15px 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .quick-action-btn {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            color: #495057;
+            padding: 8px 12px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: all 0.2s;
+        }
+
+        .quick-action-btn:hover {
+            background: #e9ecef;
+            border-color: #adb5bd;
+            transform: translateY(-1px);
+        }
+
+        .case-success {
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 15px 0;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .case-id {
+            font-family: 'Courier New', monospace;
+            background: rgba(255,255,255,0.5);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .suggestions-list {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 10px 0;
+        }
+
+        .suggestions-list h4 {
+            color: #495057;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+        }
+
+        .suggestions-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .suggestions-list li {
+            padding: 4px 0;
+            color: #6c757d;
+            font-size: 0.85em;
+        }
+
+        .suggestions-list li:before {
+            content: "💡 ";
+            margin-right: 4px;
+        }
+
+        @media (max-width: 768px) {
+            .chatbot-container {
+                height: 90vh;
+                margin: 10px;
+                max-width: 100%;
+            }
+            
+            .field-status {
+                grid-template-columns: 1fr;
+            }
+
+            .message-content {
+                max-width: 85%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <div class="chatbot-header">
+            <h1>🤖 DPIA Analysis AI Chatbot</h1>
+            <p>Intelligent analysis and automated DPIA case creation</p>
+            <div class="claude-badge">⚡ Powered by Claude AI</div>
+        </div>
+        
+        <div id="connectionStatus" class="connection-status disconnected">
+            <span>🔴 Checking server connection...</span>
+            <span class="claude-status" id="claudeStatus">Claude: Initializing...</span>
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-avatar">
+                    🤖
+                    <div class="claude-indicator"></div>
+                </div>
+                <div class="message-content">
+                    👋 <strong>Hello! I'm your enhanced DPIA Analysis AI assistant, powered by Claude.</strong><br><br>
+                    I can help you analyze research text with advanced AI understanding and automatically create DPIA cases in your Pega system.<br><br>
+                    🧠 <strong>Enhanced with Claude AI, I can:</strong><br>
+                    • Understand complex research contexts intelligently<br>
+                    • Detect information with high accuracy and confidence scores<br>
+                    • Have natural conversations about your research<br>
+                    • Generate smart suggestions and project titles<br>
+                    • Create comprehensive DPIA cases<br><br>
+                    <div class="quick-actions">
+                        <button class="quick-action-btn" onclick="sendQuickMessage('We have 4 groups (healthy, injured+vehicle control, treatment 1(Rmim), treatment 2 (Wmim).Lung stem cells (AT2-TRITC) and total cells (DAPI) are stained. N=9-10 per group were stained and need imaging and quantification.')">🧪 Try Sample Research</button>
+                        <button class="quick-action-btn" onclick="sendQuickMessage('How does Claude enhance the analysis?')">🧠 Claude Features</button>
+                        <button class="quick-action-btn" onclick="sendQuickMessage('Help me understand the DPIA process')">❓ DPIA Help</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="message-avatar">
+                🤖
+                <div class="claude-indicator"></div>
+            </div>
+            <div>Claude is thinking</div>
+            <div class="typing-dots">
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+                <div class="typing-dot"></div>
+            </div>
+        </div>
+        
+        <div class="chat-input-area">
+            <div class="input-container">
+                <textarea 
+                    id="chatInput" 
+                    class="chat-input" 
+                    placeholder="Ask me anything or paste your research text for intelligent analysis..."
+                    rows="1"
+                ></textarea>
+                <button id="sendBtn" class="send-btn" onclick="sendMessage()">
+                    ➤
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CONFIG = {
+            // Enhanced API endpoint with Claude integration
+            API_URL: 'http://localhost:8080',
+            // For production deployment:
+            // API_URL: 'https://your-claude-enhanced-server.herokuapp.com'
+        };
+
+        let currentConversation = [];
+        let awaitingPromptResponses = false;
+        let currentPrompts = [];
+        let serverConnected = false;
+        let claudeConnected = false;
+        let currentAnalysis = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatInput = document.getElementById('chatInput');
+            
+            // Check server connection
+            checkServerConnection();
+            
+            // Auto-resize textarea
+            chatInput.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+            });
+
+            // Send on Enter (but allow Shift+Enter for new lines)
+            chatInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        });
+
+        async function checkServerConnection() {
+            try {
+                const response = await fetch(`${CONFIG.API_URL}/health`);
+                if (response.ok) {
+                    const healthData = await response.json();
+                    serverConnected = true;
+                    claudeConnected = healthData.claude_integration === "healthy";
+                    updateConnectionStatus(true, claudeConnected);
+                } else {
+                    throw new Error('Server not responding');
+                }
+            } catch (error) {
+                serverConnected = false;
+                claudeConnected = false;
+                updateConnectionStatus(false, false);
+            }
+        }
+
+        function updateConnectionStatus(connected, claudeStatus) {
+            const statusElement = document.getElementById('connectionStatus');
+            const claudeStatusElement = document.getElementById('claudeStatus');
+            
+            if (connected) {
+                statusElement.className = 'connection-status connected';
+                statusElement.querySelector('span:first-child').innerHTML = '🟢 Connected to Enhanced DPIA Server';
+                
+                if (claudeStatus) {
+                    claudeStatusElement.innerHTML = 'Claude: ✅ Active';
+                } else {
+                    claudeStatusElement.innerHTML = 'Claude: ⚠️ Fallback Mode';
+                }
+            } else {
+                statusElement.className = 'connection-status disconnected';
+                statusElement.querySelector('span:first-child').innerHTML = '🔴 Server Offline - Demo Mode Only';
+                claudeStatusElement.innerHTML = 'Claude: ❌ Offline';
+            }
+        }
+
+        function sendQuickMessage(message) {
+            document.getElementById('chatInput').value = message;
+            sendMessage();
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            // Add user message to chat
+            addMessage('user', message);
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Show typing indicator
+            showTyping();
+
+            try {
+                if (serverConnected) {
+                    await chatWithClaudeAPI(message);
+                } else {
+                    await chatWithDemo(message);
+                }
+            } catch (error) {
+                hideTyping();
+                addMessage('bot', `❌ I encountered an error: ${error.message}<br><br>💡 <strong>Troubleshooting:</strong><br>• Make sure the enhanced server is running on localhost:8080<br>• Check your Claude API configuration<br>• Try refreshing the page`);
+            }
+        }
+
+        async function chatWithClaudeAPI(message) {
+            try {
+                const response = await fetch(`${CONFIG.API_URL}/chat`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        context: {
+                            conversation_length: currentConversation.length,
+                            has_analysis: currentAnalysis !== null
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+
+                const result = await response.json();
+                hideTyping();
+
+                // Display Claude's response
+                addMessage('bot', result.response);
+
+                // If there's an analysis result, display it
+                if (result.analysis_result) {
+                    currentAnalysis = result.analysis_result;
+                    displayAnalysisResult(result.analysis_result);
+                }
+
+                // Show suggestions if available
+                if (result.suggestions && result.suggestions.length > 0) {
+                    displaySuggestions(result.suggestions);
+                }
+
+                // Handle next action
+                if (result.next_action === "create_case" && currentAnalysis && currentAnalysis.missing_fields.length === 0) {
+                    setTimeout(() => {
+                        showCreateCaseOption();
+                    }, 1000);
+                }
+
+            } catch (error) {
+                hideTyping();
+                console.error('Claude API Error:', error);
+                addMessage('bot', `❌ Failed to connect to Claude-enhanced server.<br><br>🔧 <strong>Error:</strong> ${error.message}<br><br>💡 <strong>Falling back to demo mode...</strong>`);
+                await chatWithDemo(message);
+            }
+        }
+
+        function displayAnalysisResult(analysis) {
+            let analysisHtml = `<div class="analysis-result">
+                <div class="analysis-header">
+                    🔍 <strong>Claude AI Analysis Complete</strong>
+                    <span style="font-size: 0.8em; opacity: 0.7;">• ${analysis.analysis_summary}</span>
+                </div>`;
+            
+            // Show detected fields with confidence scores
+            analysisHtml += `<div class="field-status">`;
+            Object.entries(analysis.detected_fields).forEach(([field, value]) => {
+                const confidence = analysis.confidence_scores[field] || 0;
+                const isDetected = value !== "Unknown" && value && value.trim();
+                let fieldClass = 'field-missing';
+                
+                if (isDetected) {
+                    fieldClass = confidence > 0.7 ? 'field-detected' : 'field-uncertain';
+                }
+                
+                analysisHtml += `<div class="field-item ${fieldClass}">
+                    <strong>${field}:</strong><br>
+                    ${isDetected ? '✅' : '❌'} ${value || 'Not detected'}
+                    <div class="confidence-score">Confidence: ${Math.round(confidence * 100)}%</div>
+                </div>`;
+            });
+            analysisHtml += `</div>`;
+
+            if (analysis.interactive_prompts && analysis.interactive_prompts.length > 0) {
+                analysisHtml += `<br>🤖 <strong>I need to ask you about ${analysis.interactive_prompts.length} fields to create a complete DPIA case:</strong>`;
+                analysisHtml += `</div>`;
+                addMessage('bot', analysisHtml);
+                
+                setTimeout(() => {
+                    showInteractivePrompts(analysis.interactive_prompts);
+                }, 500);
+            } else {
+                analysisHtml += `<br>✅ <strong>All fields detected! Ready to create DPIA case.</strong></div>`;
+                addMessage('bot', analysisHtml);
+                
+                setTimeout(() => {
+                    showCreateCaseOption();
+                }, 500);
+            }
+        }
+
+        function displaySuggestions(suggestions) {
+            if (suggestions.length === 0) return;
+            
+            let suggestionsHtml = `<div class="suggestions-list">
+                <h4>💡 Suggestions:</h4>
+                <ul>`;
+            
+            suggestions.forEach(suggestion => {
+                suggestionsHtml += `<li>${suggestion}</li>`;
+            });
+            
+            suggestionsHtml += `</ul></div>`;
+            
+            addMessage('bot', suggestionsHtml);
+        }
+
+        function showCreateCaseOption() {
+            const createCaseHtml = `
+                <div class="interactive-prompt">
+                    <div class="prompt-question">🚀 Ready to create your DPIA case?</div>
+                    <p>All required information has been detected. I can now create a comprehensive DPIA case in your Pega system.</p>
+                    <button class="submit-responses-btn" onclick="createDPIACase()">
+                        ✨ Create DPIA Case with Claude AI
+                    </button>
+                </div>`;
+            
+            addMessage('bot', createCaseHtml);
+        }
+
+        async function createDPIACase() {
+            if (!currentAnalysis) {
+                addMessage('bot', '❌ No analysis data available. Please analyze your research text first.');
+                return;
+            }
+
+            showTyping();
+
+            try {
+                const response = await fetch(`${CONFIG.API_URL}/create-case`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        detected_fields: currentAnalysis.detected_fields,
+                        research_text: currentConversation.find(msg => msg.type === 'user')?.content || '',
+                        user_responses: {} // Add any user responses here
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Case creation failed: ${response.status}`);
+                }
+
+                const result = await response.json();
+                hideTyping();
+
+                const successHtml = `
+                    <div class="case-success">
+                        🎉 <strong>DPIA Case Created Successfully!</strong><br><br>
+                        <strong>Case ID:</strong> <span class="case-id">${result.ID}</span><br>
+                        <strong>Status:</strong> ${result.status}<br>
+                        <strong>Created by:</strong> Claude AI Assistant<br><br>
+                        Your case has been submitted to the Pega system and is ready for review.
+                    </div>`;
+
+                addMessage('bot', successHtml);
+
+                // Generate a follow-up message with Claude
+                setTimeout(async () => {
+                    try {
+                        const followUpResponse = await fetch(`${CONFIG.API_URL}/chat`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                message: `Case ${result.ID} was created successfully. What would you like to do next?`,
+                                context: { case_created: true, case_id: result.ID }
+                            })
+                        });
+
+                        if (followUpResponse.ok) {
+                            const followUpResult = await followUpResponse.json();
+                            addMessage('bot', followUpResult.response);
+                        }
+                    } catch (error) {
+                        console.error('Follow-up message error:', error);
+                    }
+                }, 1000);
+
+            } catch (error) {
+                hideTyping();
+                console.error('Case creation error:', error);
+                addMessage('bot', `❌ Failed to create DPIA case: ${error.message}<br><br>💡 Please try again or contact support if the issue persists.`);
+            }
+        }
+
+        function showInteractivePrompts(prompts) {
+            let promptsHtml = `💬 <strong>I need some additional information:</strong><br><br>`;
+            currentPrompts = prompts;
+            
+            prompts.forEach((prompt, index) => {
+                promptsHtml += `<div class="interactive-prompt">
+                    <div class="prompt-question">${prompt.question}</div>`;
+                
+                if (prompt.input_type === 'selection') {
+                    promptsHtml += `<div class="prompt-options">`;
+                    prompt.options.forEach(option => {
+                        promptsHtml += `<label class="prompt-option">
+                            <input type="radio" name="prompt_${prompt.field}" value="${option}">
+                            ${option}
+                        </label>`;
+                    });
+                    promptsHtml += `</div>`;
+                } else if (prompt.input_type === 'text_input') {
+                    promptsHtml += `<input type="text" class="prompt-input" id="prompt_${prompt.field}" placeholder="Enter ${prompt.field.toLowerCase()}...">`;
+                    if (prompt.suggestions) {
+                        promptsHtml += `<div class="prompt-suggestions">💡 Suggestions: ${prompt.suggestions.join(', ')}</div>`;
+                    }
+                }
+                
+                promptsHtml += `</div>`;
+            });
+            
+            promptsHtml += `<button class="submit-responses-btn" onclick="submitPromptResponses()">
+                🚀 Submit Responses & Create DPIA Case
+            </button>`;
+
+            addMessage('bot', promptsHtml);
+            awaitingPromptResponses = true;
+        }
+
+        async function submitPromptResponses() {
+            const responses = {};
+            
+            currentPrompts.forEach(prompt => {
+                if (prompt.input_type === 'selection') {
+                    const selected = document.querySelector(`input[name="prompt_${prompt.field}"]:checked`);
+                    if (selected) {
+                        responses[prompt.field] = selected.value;
+                    }
+                } else if (prompt.input_type === 'text_input') {
+                    const input = document.getElementById(`prompt_${prompt.field}`);
+                    if (input && input.value.trim()) {
+                        responses[prompt.field] = input.value.trim();
+                    }
+                }
+            });
+
+            if (Object.keys(responses).length === 0) {
+                addMessage('bot', '❌ Please provide at least one response before submitting.');
+                return;
+            }
+
+            showTyping();
+
+            try {
+                // Update fields with responses
+                const updateResponse = await fetch(`${CONFIG.API_URL}/update-fields`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        field_responses: responses,
+                        original_analysis: currentAnalysis
+                    })
+                });
+
+                if (!updateResponse.ok) {
+                    throw new Error(`Field update failed: ${updateResponse.status}`);
+                }
+
+                const updateResult = await updateResponse.json();
+                hideTyping();
+
+                // Update current analysis
+                currentAnalysis.detected_fields = updateResult.updated_fields;
+                currentAnalysis.missing_fields = Object.entries(updateResult.updated_fields)
+                    .filter(([field, value]) => value === "Unknown")
+                    .map(([field, value]) => field);
+
+                addMessage('bot', updateResult.response);
+
+                if (updateResult.ready_for_case_creation) {
+                    setTimeout(() => {
+                        showCreateCaseOption();
+                    }, 1000);
+                }
+
+            } catch (error) {
+                hideTyping();
+                console.error('Response submission error:', error);
+                addMessage('bot', `❌ Failed to submit responses: ${error.message}`);
+            }
+
+            awaitingPromptResponses = false;
+        }
+
+        async function chatWithDemo(message) {
+            // Fallback demo mode
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            hideTyping();
+
+            addMessage('bot', `🤖 <em>(Demo Mode)</em><br><br>I received your message: "${message.substring(0, 100)}${message.length > 100 ? '...' : ''}"<br><br>In demo mode, I can't access Claude AI, but I can still help with basic analysis. To use the full Claude-powered features, please ensure the server is running with proper API configuration.`);
+        }
+
+        function addMessage(type, content) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            const avatar = document.createElement('div');
+            avatar.className = 'message-avatar';
+            
+            if (type === 'user') {
+                avatar.textContent = '👤';
+            } else {
+                avatar.innerHTML = '🤖<div class="claude-indicator"></div>';
+            }
+            
+            const messageContent = document.createElement('div');
+            messageContent.className = 'message-content';
+            messageContent.innerHTML = content;
+            
+            if (type === 'user') {
+                messageDiv.appendChild(messageContent);
+                messageDiv.appendChild(avatar);
+            } else {
+                messageDiv.appendChild(avatar);
+                messageDiv.appendChild(messageContent);
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+            // Store in conversation history
+            currentConversation.push({
+                type: type,
+                content: content,
+                timestamp: new Date()
+            });
+        }
+
+        function showTyping() {
+            document.getElementById('typingIndicator').style.display = 'flex';
+            document.getElementById('sendBtn').disabled = true;
+            
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        function hideTyping() {
+            document.getElementById('typingIndicator').style.display = 'none';
+            document.getElementById('sendBtn').disabled = false;
+        }
+    </script>
+</body>
+</html> 
