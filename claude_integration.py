@@ -71,6 +71,30 @@ class ClaudeIntegration:
         self.assay_types = [
             "H&E", "IHC", "Special Stain", "Other", "Unknown"
         ]
+        
+        # Additional context for enhanced analysis
+        self.reference_context = ""
+        self.analysis_guidelines = ""
+
+    def set_reference_context(self, context: str):
+        """Set additional reference context for enhanced analysis"""
+        self.reference_context = context
+        logger.info("Reference context updated for enhanced analysis")
+
+    def set_analysis_guidelines(self, guidelines: str):
+        """Set specific analysis guidelines from reference documents"""
+        self.analysis_guidelines = guidelines
+        logger.info("Analysis guidelines updated")
+
+    def load_context_from_file(self, file_path: str):
+        """Load additional context from a text file"""
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                context = f.read()
+                self.set_reference_context(context)
+                logger.info(f"Loaded context from {file_path}")
+        except Exception as e:
+            logger.error(f"Failed to load context from {file_path}: {e}")
 
     def add_to_conversation(self, role: str, content: str):
         """Add a message to the conversation history"""
@@ -81,10 +105,11 @@ class ClaudeIntegration:
         if len(self.conversation_history) > 10:
             self.conversation_history = self.conversation_history[-10:]
 
-    async def analyze_research_text(self, research_text: str) -> AnalysisResult:
+    async def analyze_research_text(self, research_text: str, use_enhanced_context: bool = True) -> AnalysisResult:
         """Analyze research text using Claude to extract DPIA-relevant information"""
         
-        system_prompt = f"""You are an expert AI assistant specializing in analyzing biomedical research text for DPIA (Data Privacy Impact Assessment) case creation. Your task is to extract specific information from research text and identify missing mandatory fields.
+        # Build enhanced system prompt with reference context
+        base_system_prompt = f"""You are an expert AI assistant specializing in analyzing biomedical research text for DPIA (Data Privacy Impact Assessment) case creation. Your task is to extract specific information from research text and identify missing mandatory fields.
 
 MANDATORY FIELDS TO EXTRACT:
 {', '.join(self.mandatory_fields)}
@@ -96,16 +121,45 @@ FIELD DEFINITIONS:
 - Procedure: Imaging/analysis method ({', '.join(self.procedures)})
 - Assay Type/Staining Type: Laboratory technique ({', '.join(self.assay_types)})
 - Project Title: Descriptive name for the research project
-- Request Purpose: Objective/goal of the research
+- Request Purpose: Objective/goal of the research"""
+
+        # Add reference context if available
+        if use_enhanced_context and self.reference_context:
+            enhanced_context = f"""
+
+ADDITIONAL REFERENCE CONTEXT:
+The following reference material provides additional guidance for DPIA analysis:
+
+{self.reference_context[:2000]}  # Limit context to avoid token limits
+
+Use this reference context to:
+- Better understand DPIA requirements
+- Improve field extraction accuracy
+- Provide more relevant suggestions
+- Generate better interactive prompts"""
+            base_system_prompt += enhanced_context
+
+        # Add analysis guidelines if available
+        if use_enhanced_context and self.analysis_guidelines:
+            guidelines_context = f"""
+
+SPECIFIC ANALYSIS GUIDELINES:
+{self.analysis_guidelines[:1000]}
+
+Follow these guidelines when analyzing research text and extracting DPIA information."""
+            base_system_prompt += guidelines_context
+
+        system_prompt = base_system_prompt + f"""
 
 ANALYSIS INSTRUCTIONS:
 1. Carefully read the research text
 2. Extract any explicitly mentioned information for each mandatory field
 3. Use intelligent inference for fields that can be reasonably deduced
-4. Mark fields as "Unknown" only if no reasonable inference can be made
-5. Provide confidence scores (0.0-1.0) for each detected field
-6. Generate interactive prompts for missing/uncertain fields
-7. Suggest improvements and next steps
+4. Apply the reference context and guidelines to improve accuracy
+5. Mark fields as "Unknown" only if no reasonable inference can be made
+6. Provide confidence scores (0.0-1.0) for each detected field
+7. Generate interactive prompts for missing/uncertain fields
+8. Suggest improvements and next steps based on reference materials
 
 RESPONSE FORMAT:
 Return a JSON object with this exact structure:

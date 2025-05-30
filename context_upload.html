@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📚 DPIA Context Manager - Claude Enhancement</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 25px;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            background: #f8f9fa;
+        }
+
+        .section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+        }
+
+        .section-icon {
+            margin-right: 10px;
+            font-size: 1.5em;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 200px;
+            resize: vertical;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .status {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 600;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #e7f3ff;
+            color: #0056b3;
+            border: 1px solid #b3d7ff;
+        }
+
+        .context-preview {
+            background: #f1f3f4;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin-top: 15px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e1e5e9;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .navigation {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e1e5e9;
+        }
+
+        .nav-link {
+            display: inline-block;
+            margin: 0 15px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .nav-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📚 DPIA Context Manager</h1>
+            <p>Enhance Claude AI analysis with reference documents and guidelines</p>
+        </div>
+
+        <div class="content">
+            <!-- Current Status Section -->
+            <div class="section">
+                <h3><span class="section-icon">📊</span>Current Context Status</h3>
+                <div id="contextStatus" class="status info">
+                    🔄 Loading context status...
+                </div>
+                <div class="stats" id="contextStats">
+                    <!-- Stats will be populated by JavaScript -->
+                </div>
+                <div id="contextPreview" class="context-preview" style="display: none;">
+                    <!-- Preview will be shown here -->
+                </div>
+            </div>
+
+            <!-- Reference Context Section -->
+            <div class="section">
+                <h3><span class="section-icon">📖</span>Reference Context</h3>
+                <p style="margin-bottom: 15px; color: #666;">
+                    Upload reference documents (like your Google Doc) to provide Claude with additional context for better DPIA analysis.
+                </p>
+                <div class="form-group">
+                    <label for="referenceContext">Reference Document Content:</label>
+                    <textarea 
+                        id="referenceContext" 
+                        class="form-control" 
+                        placeholder="Paste the content from your Google Doc here...&#10;&#10;This could include:&#10;- DPIA requirements and guidelines&#10;- Field definitions and examples&#10;- Research methodology standards&#10;- Compliance requirements&#10;- Best practices documentation"
+                    ></textarea>
+                </div>
+                <button onclick="uploadReferenceContext()" class="btn">
+                    📤 Upload Reference Context
+                </button>
+                <button onclick="clearReferenceContext()" class="btn btn-secondary">
+                    🗑️ Clear Context
+                </button>
+            </div>
+
+            <!-- Analysis Guidelines Section -->
+            <div class="section">
+                <h3><span class="section-icon">📋</span>Analysis Guidelines</h3>
+                <p style="margin-bottom: 15px; color: #666;">
+                    Provide specific guidelines for how Claude should analyze research text and extract DPIA fields.
+                </p>
+                <div class="form-group">
+                    <label for="analysisGuidelines">Analysis Guidelines:</label>
+                    <textarea 
+                        id="analysisGuidelines" 
+                        class="form-control" 
+                        placeholder="Enter specific analysis guidelines...&#10;&#10;Examples:&#10;- How to identify therapeutic areas&#10;- Procedure classification rules&#10;- PI identification criteria&#10;- Project title formatting standards&#10;- Request purpose categorization"
+                    ></textarea>
+                </div>
+                <button onclick="uploadAnalysisGuidelines()" class="btn">
+                    📋 Upload Guidelines
+                </button>
+                <button onclick="clearAnalysisGuidelines()" class="btn btn-secondary">
+                    🗑️ Clear Guidelines
+                </button>
+            </div>
+
+            <!-- Quick Actions Section -->
+            <div class="section">
+                <h3><span class="section-icon">⚡</span>Quick Actions</h3>
+                <button onclick="refreshStatus()" class="btn btn-success">
+                    🔄 Refresh Status
+                </button>
+                <button onclick="testEnhancedAnalysis()" class="btn">
+                    🧪 Test Enhanced Analysis
+                </button>
+                <button onclick="exportContext()" class="btn btn-secondary">
+                    💾 Export Context
+                </button>
+            </div>
+
+            <!-- Navigation -->
+            <div class="navigation">
+                <a href="index.html" class="nav-link">🏠 Home</a>
+                <a href="dpia_chatbot_production.html" class="nav-link">🤖 DPIA Chatbot</a>
+                <a href="http://localhost:8080/docs" class="nav-link" target="_blank">📚 API Docs</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+
+        // Load context status on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            refreshStatus();
+        });
+
+        async function refreshStatus() {
+            try {
+                const response = await fetch(`${API_BASE}/context-status`);
+                const data = await response.json();
+                
+                if (data.error) {
+                    showStatus('error', `❌ Error: ${data.error}`);
+                    return;
+                }
+
+                // Update status display
+                const statusEl = document.getElementById('contextStatus');
+                if (data.has_reference_context || data.has_guidelines) {
+                    statusEl.className = 'status success';
+                    statusEl.innerHTML = '✅ Enhanced context is active - Claude analysis is enhanced!';
+                } else {
+                    statusEl.className = 'status info';
+                    statusEl.innerHTML = '📝 No additional context set - Using default Claude analysis';
+                }
+
+                // Update stats
+                const statsEl = document.getElementById('contextStats');
+                statsEl.innerHTML = `
+                    <div class="stat-card">
+                        <div class="stat-number">${data.reference_context_length}</div>
+                        <div class="stat-label">Reference Context Characters</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${data.guidelines_length}</div>
+                        <div class="stat-label">Guidelines Characters</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${data.has_reference_context ? '✅' : '❌'}</div>
+                        <div class="stat-label">Reference Context</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${data.has_guidelines ? '✅' : '❌'}</div>
+                        <div class="stat-label">Analysis Guidelines</div>
+                    </div>
+                `;
+
+                // Show preview if available
+                const previewEl = document.getElementById('contextPreview');
+                if (data.context_preview && data.context_preview !== 'No context set') {
+                    previewEl.style.display = 'block';
+                    previewEl.innerHTML = `<strong>Context Preview:</strong><br>${data.context_preview}`;
+                } else {
+                    previewEl.style.display = 'none';
+                }
+
+            } catch (error) {
+                showStatus('error', `❌ Failed to load context status: ${error.message}`);
+            }
+        }
+
+        async function uploadReferenceContext() {
+            const context = document.getElementById('referenceContext').value.trim();
+            if (!context) {
+                showStatus('error', '❌ Please enter reference context content');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/set-context`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        context: context,
+                        context_type: 'reference'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('success', `✅ ${data.message} (${data.context_length} characters)`);
+                    refreshStatus();
+                } else {
+                    showStatus('error', `❌ ${data.message}`);
+                }
+            } catch (error) {
+                showStatus('error', `❌ Failed to upload reference context: ${error.message}`);
+            }
+        }
+
+        async function uploadAnalysisGuidelines() {
+            const guidelines = document.getElementById('analysisGuidelines').value.trim();
+            if (!guidelines) {
+                showStatus('error', '❌ Please enter analysis guidelines');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/set-context`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        context: guidelines,
+                        context_type: 'guidelines'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('success', `✅ ${data.message} (${data.guidelines_length} characters)`);
+                    refreshStatus();
+                } else {
+                    showStatus('error', `❌ ${data.message}`);
+                }
+            } catch (error) {
+                showStatus('error', `❌ Failed to upload analysis guidelines: ${error.message}`);
+            }
+        }
+
+        async function clearReferenceContext() {
+            if (!confirm('Are you sure you want to clear the reference context?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/set-context`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        context: '',
+                        context_type: 'reference'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('success', '✅ Reference context cleared');
+                    document.getElementById('referenceContext').value = '';
+                    refreshStatus();
+                } else {
+                    showStatus('error', `❌ ${data.message}`);
+                }
+            } catch (error) {
+                showStatus('error', `❌ Failed to clear reference context: ${error.message}`);
+            }
+        }
+
+        async function clearAnalysisGuidelines() {
+            if (!confirm('Are you sure you want to clear the analysis guidelines?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/set-context`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        context: '',
+                        context_type: 'guidelines'
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('success', '✅ Analysis guidelines cleared');
+                    document.getElementById('analysisGuidelines').value = '';
+                    refreshStatus();
+                } else {
+                    showStatus('error', `❌ ${data.message}`);
+                }
+            } catch (error) {
+                showStatus('error', `❌ Failed to clear analysis guidelines: ${error.message}`);
+            }
+        }
+
+        async function testEnhancedAnalysis() {
+            const testText = "Leica SP8 - Bldg 12 Time-lapse imaging to monitor small molecule distribution in mammalian cells";
+            
+            try {
+                const response = await fetch(`${API_BASE}/analyze`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        research_text: testText,
+                        enhance_fields: true
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    showStatus('success', `✅ Enhanced analysis test completed! Found ${Object.keys(data.detected_fields).length} fields with enhanced context.`);
+                } else {
+                    showStatus('error', `❌ Test failed: ${data.message}`);
+                }
+            } catch (error) {
+                showStatus('error', `❌ Test failed: ${error.message}`);
+            }
+        }
+
+        function exportContext() {
+            const referenceContext = document.getElementById('referenceContext').value;
+            const analysisGuidelines = document.getElementById('analysisGuidelines').value;
+            
+            const exportData = {
+                reference_context: referenceContext,
+                analysis_guidelines: analysisGuidelines,
+                export_date: new Date().toISOString()
+            };
+            
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dpia_context_export_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showStatus('success', '✅ Context exported successfully');
+        }
+
+        function showStatus(type, message) {
+            // Create a temporary status message
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status ${type}`;
+            statusDiv.innerHTML = message;
+            
+            // Insert at the top of content
+            const content = document.querySelector('.content');
+            content.insertBefore(statusDiv, content.firstChild);
+            
+            // Remove after 5 seconds
+            setTimeout(() => {
+                if (statusDiv.parentNode) {
+                    statusDiv.parentNode.removeChild(statusDiv);
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html> 

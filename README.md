@@ -42,8 +42,8 @@ An intelligent Data Privacy Impact Assessment (DPIA) chatbot that combines **Cla
 
 1. **Clone the repository**
 ```bash
-git clone <your-repo-url>
-cd pega_model_context_server
+git clone https://github.com/Bhashyem/dpia-ai-chatbot.git
+cd dpia-ai-chatbot
 ```
 
 2. **Create virtual environment**

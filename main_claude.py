@@ -169,6 +169,16 @@ class CaseResponse(BaseModel):
     nextAssignmentName: Optional[str]
     links: Optional[List[Dict[str, str]]]
 
+# Add new request models for context management
+class ContextRequest(BaseModel):
+    context: str
+    context_type: str = "reference"  # "reference" or "guidelines"
+
+class FileUploadRequest(BaseModel):
+    file_content: str
+    file_name: str
+    context_type: str = "reference"
+
 # Claude-powered endpoints
 @app.post("/chat", response_model=ChatResponse)
 async def chat_with_claude(chat_request: ChatMessage):
@@ -1187,6 +1197,81 @@ async def serve_chatbot_interface():
         </body>
         </html>
         """)
+
+@app.post("/set-context")
+async def set_analysis_context(request: ContextRequest):
+    """Set additional context for enhanced Claude analysis"""
+    try:
+        if request.context_type == "reference":
+            claude_integration.set_reference_context(request.context)
+            return {
+                "success": True,
+                "message": "Reference context updated successfully",
+                "context_length": len(request.context)
+            }
+        elif request.context_type == "guidelines":
+            claude_integration.set_analysis_guidelines(request.context)
+            return {
+                "success": True,
+                "message": "Analysis guidelines updated successfully",
+                "guidelines_length": len(request.context)
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Invalid context_type. Use 'reference' or 'guidelines'"
+            }
+    except Exception as e:
+        logger.error(f"Error setting context: {e}")
+        return {
+            "success": False,
+            "message": f"Failed to set context: {str(e)}"
+        }
+
+@app.post("/upload-context-file")
+async def upload_context_file(request: FileUploadRequest):
+    """Upload a file to set as analysis context"""
+    try:
+        # Save the file temporarily
+        temp_file_path = f"temp_{request.file_name}"
+        with open(temp_file_path, 'w', encoding='utf-8') as f:
+            f.write(request.file_content)
+        
+        # Load context from file
+        claude_integration.load_context_from_file(temp_file_path)
+        
+        # Clean up temp file
+        os.remove(temp_file_path)
+        
+        return {
+            "success": True,
+            "message": f"Context loaded from {request.file_name}",
+            "file_size": len(request.file_content),
+            "context_type": request.context_type
+        }
+    except Exception as e:
+        logger.error(f"Error uploading context file: {e}")
+        return {
+            "success": False,
+            "message": f"Failed to upload context file: {str(e)}"
+        }
+
+@app.get("/context-status")
+async def get_context_status():
+    """Get current context status"""
+    try:
+        return {
+            "reference_context_length": len(claude_integration.reference_context),
+            "guidelines_length": len(claude_integration.analysis_guidelines),
+            "has_reference_context": bool(claude_integration.reference_context),
+            "has_guidelines": bool(claude_integration.analysis_guidelines),
+            "context_preview": claude_integration.reference_context[:200] + "..." if claude_integration.reference_context else "No context set"
+        }
+    except Exception as e:
+        logger.error(f"Error getting context status: {e}")
+        return {
+            "error": f"Failed to get context status: {str(e)}"
+        }
 
 if __name__ == "__main__":
     import uvicorn
