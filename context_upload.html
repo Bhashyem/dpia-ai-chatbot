@@ -304,10 +304,36 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:8080';
-
-        // Load context status on page load
+        // Auto-detect API base URL based on environment
+        function getApiBase() {
+            // Check if we're on GitHub Pages
+            if (window.location.hostname === 'bhashyem.github.io') {
+                // Production environment - you'll need to set this to your deployed server
+                return 'https://your-dpia-server.herokuapp.com'; // Update this when you deploy
+            }
+            
+            // Check for custom API URL in URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const customApi = urlParams.get('api');
+            if (customApi) {
+                return customApi;
+            }
+            
+            // Default to localhost for local development
+            return 'http://localhost:8080';
+        }
+        
+        const API_BASE = getApiBase();
+        
+        // Show current API endpoint to users
+        console.log('DPIA API Base URL:', API_BASE);
+        
+        // Add API endpoint info to the page
         document.addEventListener('DOMContentLoaded', function() {
+            // Add API info to the header
+            const header = document.querySelector('.header p');
+            header.innerHTML += `<br><small>API Endpoint: ${API_BASE}</small>`;
+            
             refreshStatus();
         });
 
