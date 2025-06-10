@@ -1,30 +1,24 @@
-#!/usr/bin/env python3
-"""
-Enhanced DPIA Chatbot Server with Claude LLM Integration
-Combines Pega case management with intelligent Claude-powered analysis
-"""
-
-from fastapi import FastAPI, HTTPException, Depends, Header, Form
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.security import OAuth2PasswordBearer
-from fastapi.responses import HTMLResponse
-from pydantic import BaseModel, Field
-from typing import Optional, Dict, Any, List
-import requests
 import os
 from dotenv import load_dotenv
+
+# Load environment variables FIRST before any other imports
+load_dotenv()
+
+from fastapi import FastAPI, HTTPException, Depends, Header, Form, Request, BackgroundTasks
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer
+from fastapi.responses import HTMLResponse, JSONResponse
+from pydantic import BaseModel, Field
+from typing import Optional, Dict, Any, List, Union
+import requests
 import logging
 import base64
 import json
 from datetime import datetime, timedelta
 import asyncio
 import uuid
-
-# Import our Claude integration
-from claude_integration import claude_integration, AnalysisResult
-
-# Load environment variables
-load_dotenv()
+from galileo_claude_adapter import claude_integration, AnalysisResult
+from rdchat_integration import setup_rdchat_routes
 
 # Configure logging
 logging.basicConfig(
@@ -34,8 +28,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="DPIA Chatbot Server with Claude LLM",
-    description="Intelligent DPIA analysis and case creation with Claude AI",
+    title="DPIA Chatbot Server with Galileo AI LLM",
+    description="Intelligent DPIA analysis and case creation with Galileo AI",
     version="2.0.0"
 )
 
@@ -59,7 +53,7 @@ BASIC_AUTH = base64.b64encode(f"{PEGA_USERNAME}:{PEGA_PASSWORD}".encode()).decod
 # DPIA questionnaire flow - integrated with Claude analysis
 dpia_questions = {
     "start": {
-        "question": "Welcome to the DPIA Assessment with Claude AI! I can analyze your research text or guide you through our questionnaire. Would you like to start?",
+        "question": "Welcome to the DPIA Assessment with Galileo AI! I can analyze your research text or guide you through our questionnaire. Would you like to start?",
         "options": ["Yes", "No"],
         "next": {"Yes": "input_method", "No": "end"}
     },
@@ -69,7 +63,7 @@ dpia_questions = {
         "next": {"Paste research text for AI analysis": "text_analysis", "Answer questionnaire step by step": "project_name"}
     },
     "text_analysis": {
-        "question": "Please paste your research text below and I'll analyze it with Claude AI to extract DPIA information:",
+        "question": "Please paste your research text below and I'll analyze it with Galileo AI to extract DPIA information:",
         "type": "text",
         "next": "analyze_text"
     },
@@ -222,7 +216,10 @@ async def chat_with_claude(chat_request: ChatMessage):
         if is_research_text:
             # This looks like research text - analyze it with Claude
             logger.info("Research text detected, performing Claude analysis")
+            # Analyze with Claude
+            logger.info("About to call claude_integration.analyze_research_text")
             analysis_result = await claude_integration.analyze_research_text(message)
+            logger.info("Analysis completed successfully")
             
             # Update session with analysis results
             session["analysis_results"] = {
@@ -805,7 +802,10 @@ async def analyze_research_text(analysis_request: AnalysisRequest):
     try:
         logger.info(f"Analyzing research text: {len(analysis_request.research_text)} characters")
         
+        # Analyze with Claude
+        logger.info("About to call claude_integration.analyze_research_text")
         analysis_result = await claude_integration.analyze_research_text(analysis_request.research_text)
+        logger.info("Analysis completed successfully")
         
         # Optionally enhance field detection
         if analysis_request.enhance_fields:
@@ -863,39 +863,40 @@ async def update_fields_with_responses(update_request: FieldUpdateRequest):
 
 @app.post("/create-case", response_model=CaseResponse)
 async def create_dpia_case_with_claude(case_request: CaseCreationRequest):
-    """Create a DPIA case in Pega with Claude-enhanced data"""
+    """Create a CALM or DPIA case in Pega with Claude-enhanced data"""
     try:
-        logger.info("Creating DPIA case with Claude-enhanced data")
+        logger.info("Creating case with Claude-enhanced data")
         
-        # Merge detected fields with user responses
-        final_fields = case_request.detected_fields.copy()
-        if case_request.user_responses:
-            final_fields.update(case_request.user_responses)
+        # Determine case type based on analysis or detected fields
+        case_type = determine_case_type(case_request.detected_fields, case_request.research_text)
+        logger.info(f"Determined case type: {case_type}")
         
         # Generate a better project title if needed
-        if final_fields.get("Project Title") == "Unknown" or not final_fields.get("Project Title"):
-            final_fields["Project Title"] = await claude_integration.generate_project_title(case_request.research_text)
+        project_title = "Unknown"
+        if case_request.detected_fields.get("project_title") == "Unknown" or not case_request.detected_fields.get("project_title"):
+            project_title = await claude_integration.generate_project_title(case_request.research_text)
+        else:
+            project_title = case_request.detected_fields.get("project_title", "Unknown")
         
-        # Validate mandatory fields
-        mandatory_fields = ["PI", "Pathologist", "Therapeutic Area", "Procedure", "Assay Type/Staining Type", "Project Title", "Request Purpose"]
-        missing_fields = [field for field in mandatory_fields if final_fields.get(field) == "Unknown" or not final_fields.get(field)]
-        
-        if missing_fields:
-            raise HTTPException(
-                status_code=400, 
-                detail=f"Missing mandatory fields: {', '.join(missing_fields)}"
-            )
-        
-        # Create Pega case
+        # Create Pega case with appropriate case type
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        case_id = f"DPIA-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        case_id_prefix = case_type.upper()
+        case_id = f"{case_id_prefix}-{datetime.now().strftime('%Y%m%d%H%M%S')}"
         
-        # Prepare Pega case content
+        # Prepare Pega case content - empty as per Pega API requirements
         case_content = {}
         
-        # Call Pega API
+        # Determine the correct Pega case type ID
+        if case_type.upper() == "CALM":
+            pega_case_type = "Roche-Pathworks-Work-CALM"
+        else:
+            pega_case_type = "Roche-Pathworks-Work-DPIA"
+        
+        logger.info(f"Attempting to create case with type: {pega_case_type}")
+        
+        # Call Pega API with the appropriate case type
         pega_request = CaseRequest(
-            caseTypeID="Roche-Pathworks-Work-DPIA",
+            caseTypeID=pega_case_type,
             processID="pyStartCase",
             content=case_content
         )
@@ -904,16 +905,117 @@ async def create_dpia_case_with_claude(case_request: CaseCreationRequest):
         
         # Generate success message with Claude
         success_message = await claude_integration.generate_conversational_response(
-            f"Successfully created DPIA case {case_response.ID} with all the analyzed information!",
-            {"case_created": True, "case_id": case_response.ID}
+            f"Successfully created {case_type} case {case_response.ID} with project title: {project_title}",
+            {"case_created": True, "case_id": case_response.ID, "project_title": project_title, "case_type": case_type}
         )
         
-        logger.info(f"DPIA case created successfully: {case_response.ID}")
+        logger.info(f"{case_type} case created successfully: {case_response.ID}")
         return case_response
         
     except Exception as e:
-        logger.error(f"Error creating DPIA case: {e}")
+        logger.error(f"Error creating case: {e}")
         raise HTTPException(status_code=500, detail=f"Case creation failed: {str(e)}")
+
+@app.post("/create-calm-case", response_model=CaseResponse)
+async def create_calm_case_with_claude(case_request: CaseCreationRequest):
+    """Create a CALM case in Pega with Claude-enhanced data"""
+    try:
+        logger.info("Creating CALM case with Claude-enhanced data")
+        
+        # Force case type to CALM
+        case_request.detected_fields["recommended_case_type"] = "CALM"
+        
+        # Use the existing case creation logic
+        return await create_dpia_case_with_claude(case_request)
+        
+    except Exception as e:
+        logger.error(f"Error creating CALM case: {e}")
+        raise HTTPException(status_code=500, detail=f"CALM case creation failed: {str(e)}")
+
+def determine_case_type(detected_fields: Dict[str, str], research_text: str) -> str:
+    """Determine whether to create a CALM or DPIA case based on analysis"""
+    try:
+        # PRIORITY 1: Check if case type was explicitly detected by Galileo AI
+        if detected_fields.get("recommended_case_type"):
+            case_type = detected_fields.get("recommended_case_type").upper()
+            if case_type in ["CALM", "DPIA"]:
+                logger.info(f"✅ Using Galileo AI recommended case type: {case_type}")
+                return case_type
+        
+        # PRIORITY 2: Check for explicit slide scanning indicators (should always be DPIA)
+        text_to_analyze = f"{research_text} {detected_fields.get('procedure_type', '')} {detected_fields.get('assay_type', '')} {detected_fields.get('project_title', '')}".lower()
+        
+        # Critical DPIA indicators that should override everything else
+        critical_dpia_keywords = [
+            'slide scanning', 'scan slides', 'scanning', 'slide submission', 'submit slides',
+            'digital pathology', 'gslide viewer', 'dpia lab', 'whole slide scanning',
+            'tissue section', 'per section', 'section analysis', 'cells per lung section'
+        ]
+        
+        if any(keyword in text_to_analyze for keyword in critical_dpia_keywords):
+            logger.info(f"🎯 Critical DPIA keyword detected - returning DPIA")
+            return "DPIA"
+        
+        # PRIORITY 3: Fallback to keyword-based analysis only if no critical indicators
+        # CALM indicators (Laboratory Compliance and Sample Management)
+        calm_keywords = [
+            'calm', 'calm request', 'laboratory compliance', 'sample management',
+            'sample', 'specimen', 'biobank', 'storage', 'processing',
+            'extraction', 'purification', 'preparation', 'handling',
+            'compliance', 'quality control', 'validation', 'documentation',
+            'protocol', 'sop', 'gmp', 'glp', 'iso', 'regulatory',
+            'mouse', 'mice', 'rat', 'animal', 'tissue', 'organ', 'eyes', 'eye',
+            'cleared', 'clearing', 'stained', 'staining', 'immunostaining',
+            'sox9', 'nucspot', 'antibody', 'fluorescent', 'fluorescence',
+            'research on', 'want to research', 'biological research',
+            'confocal', 'live-cell', 'light sheet', 'electron microscopy',
+            'research microscopy', 'advanced microscopy', 'imaging research'
+        ]
+        
+        # DPIA indicators (Digital Pathology and Image Analysis)
+        dpia_keywords = [
+            'dpia', 'digital pathology', 'whole slide', 'brightfield',
+            'fluorescent tissue sections', 'pathology workflow',
+            'digital workflow', 'slide upload', 'histopathology', 
+            'pathology', 'biopsy', 'tumor', 'cancer',
+            'diagnosis', 'diagnostic', 'clinical', 'patient', 'human tissue'
+        ]
+        
+        # Calculate scores
+        calm_score = sum(1 for keyword in calm_keywords if keyword in text_to_analyze)
+        dpia_score = sum(1 for keyword in dpia_keywords if keyword in text_to_analyze)
+        
+        # Enhanced scoring for biological research (only if no critical DPIA indicators)
+        biological_keywords = ['mouse', 'mice', 'tissue', 'eyes', 'stained', 'sox9', 'nucspot', 'cleared']
+        biological_bonus = sum(3 for keyword in biological_keywords if keyword in text_to_analyze)
+        calm_score += biological_bonus
+        
+        # Research context bonus
+        if 'research on' in text_to_analyze or 'want to research' in text_to_analyze:
+            calm_score += 2
+        
+        logger.info(f"Case type scoring - CALM: {calm_score}, DPIA: {dpia_score}")
+        
+        # Determine case type
+        if calm_score > dpia_score:
+            return "CALM"
+        elif dpia_score > calm_score:
+            return "DPIA"
+        else:
+            # Tie-breaking: favor CALM for biological research
+            if any(keyword in text_to_analyze for keyword in ['research', 'mouse', 'tissue', 'stain']):
+                return "CALM"
+            elif 'calm' in text_to_analyze:
+                return "CALM"
+            elif 'dpia' in text_to_analyze:
+                return "DPIA"
+            else:
+                # Default to DPIA
+                return "DPIA"
+                
+    except Exception as e:
+        logger.error(f"Error determining case type: {e}")
+        return "DPIA"  # Default fallback
 
 # Enhanced tools endpoint for MCP compatibility
 @app.post("/tools/call")
@@ -926,41 +1028,104 @@ async def call_tool(tool_request: Dict[str, Any]):
         logger.info(f"Tool called: {tool_name}")
         
         if tool_name == "analyze_and_create_dpia":
-            research_text = arguments.get("research_text", "")
-            action = arguments.get("action", "analyze_only")
-            auto_create = arguments.get("auto_create", False)
-            
-            # Analyze with Claude
-            analysis_result = await claude_integration.analyze_research_text(research_text)
-            
-            result = {
-                "analysis": {
-                    "detected_fields": analysis_result.detected_fields,
-                    "missing_fields": analysis_result.missing_fields,
-                    "confidence_scores": analysis_result.confidence_scores,
-                    "interactive_prompts": analysis_result.interactive_prompts,
-                    "suggestions": analysis_result.suggestions,
-                    "analysis_summary": analysis_result.analysis_summary
+            try:
+                logger.info("Entering analyze_and_create_dpia tool")
+                research_text = arguments.get("research_text", "")
+                action = arguments.get("action", "analyze_only")
+                auto_create = arguments.get("auto_create", False)
+                prompt_responses = arguments.get("prompt_responses", {})
+                logger.info(f"Parameters: research_text='{research_text}', auto_create={auto_create}")
+                
+                # Analyze with Claude
+                logger.info("About to call claude_integration.analyze_research_text")
+                analysis_result = await claude_integration.analyze_research_text(research_text)
+                logger.info("Analysis completed successfully")
+                
+                # Merge prompt responses with detected fields
+                final_detected_fields = analysis_result.detected_fields.copy()
+                if prompt_responses:
+                    logger.info(f"Merging prompt responses: {prompt_responses}")
+                    logger.info(f"Original detected fields: {final_detected_fields}")
+                    final_detected_fields.update(prompt_responses)
+                    logger.info(f"Final detected fields after merge: {final_detected_fields}")
+                else:
+                    logger.info("No prompt responses to merge")
+                
+                result = {
+                    "analysis": {
+                        "detected_fields": final_detected_fields,
+                        "missing_fields": analysis_result.missing_fields,
+                        "confidence_scores": analysis_result.confidence_scores,
+                        "interactive_prompts": analysis_result.interactive_prompts,
+                        "suggestions": analysis_result.suggestions,
+                        "analysis_summary": analysis_result.analysis_summary
+                    }
                 }
-            }
-            
-            # Auto-create case if requested and all fields are available
-            if auto_create and not analysis_result.missing_fields:
-                try:
-                    case_request = CaseCreationRequest(
-                        detected_fields=analysis_result.detected_fields,
-                        research_text=research_text
-                    )
-                    case_response = await create_dpia_case_with_claude(case_request)
-                    result["case_created"] = True
-                    result["case_id"] = case_response.ID
-                    result["case_status"] = case_response.status
-                except Exception as e:
-                    logger.error(f"Auto case creation failed: {e}")
+                
+                # Auto-create case if requested and all fields are available, or if prompt responses provided
+                logger.info(f"Auto-create parameter: {auto_create}")
+                should_create_case = auto_create or bool(prompt_responses)
+                
+                if should_create_case:
+                    try:
+                        # Determine case type before creating
+                        case_type = determine_case_type(final_detected_fields, research_text)
+                        logger.info(f"Determined case type for creation: {case_type}")
+                        
+                        case_request = CaseCreationRequest(
+                            detected_fields=final_detected_fields,
+                            research_text=research_text,
+                            user_responses=prompt_responses
+                        )
+                        case_response = await create_dpia_case_with_claude(case_request)
+                        result["case_created"] = True
+                        result["case_id"] = case_response.ID
+                        result["case_status"] = case_response.status
+                        result["case_type"] = case_type
+                        result["success"] = True
+                        logger.info(f"{case_type} case created successfully: {case_response.ID}")
+                    except Exception as e:
+                        logger.error(f"Case creation failed: {e}")
+                        result["case_created"] = False
+                        result["case_error"] = str(e)
+                        result["success"] = False
+                else:
+                    # Provide guidance when auto_create is false and no prompt responses
+                    logger.info("Auto-create is false, providing guidance")
                     result["case_created"] = False
-                    result["case_error"] = str(e)
-            
-            return {"content": [{"text": json.dumps(result)}]}
+                    
+                    # Determine case type for guidance
+                    case_type = determine_case_type(final_detected_fields, research_text)
+                    result["recommended_case_type"] = case_type
+                    
+                    # Check for missing mandatory fields
+                    mandatory_fields = ['therapeutic_area', 'pi_name', 'pathologist', 'assay_type']
+                    missing_mandatory = [field for field in mandatory_fields 
+                                       if final_detected_fields.get(field) in ['Unknown', '', None]]
+                    
+                    if missing_mandatory:
+                        result["next_steps"] = {
+                            "action": "provide_missing_fields",
+                            "message": f"Please provide the missing mandatory information: {', '.join(missing_mandatory)}",
+                            "missing_count": len(missing_mandatory),
+                            "can_create_case": False,
+                            "recommended_case_type": case_type
+                        }
+                    else:
+                        result["next_steps"] = {
+                            "action": "ready_to_create",
+                            "message": f"All required fields detected! You can now create the {case_type} case.",
+                            "missing_count": 0,
+                            "can_create_case": True,
+                            "recommended_case_type": case_type
+                        }
+                
+                logger.info(f"Final result keys: {list(result.keys())}")
+                return {"content": [{"text": json.dumps(result)}]}
+                
+            except Exception as e:
+                logger.error(f"Exception in analyze_and_create_dpia: {e}", exc_info=True)
+                return {"content": [{"text": json.dumps({"error": str(e), "analysis": {"detected_fields": {}, "missing_fields": [], "confidence_scores": {}, "interactive_prompts": [], "suggestions": [], "analysis_summary": f"Error: {str(e)}"}})}]}
             
         elif tool_name == "chat_with_claude":
             message = arguments.get("message", "")
@@ -970,6 +1135,41 @@ async def call_tool(tool_request: Dict[str, Any]):
             chat_response = await chat_with_claude(chat_request)
             
             return {"content": [{"text": chat_response.response}]}
+            
+        elif tool_name == "create_dpia_case_only":
+            # Create case without re-analyzing
+            detected_fields = arguments.get("detected_fields", {})
+            research_text = arguments.get("research_text", "")
+            
+            try:
+                # Determine case type
+                case_type = determine_case_type(detected_fields, research_text)
+                logger.info(f"Creating {case_type} case without re-analysis")
+                
+                case_request = CaseCreationRequest(
+                    detected_fields=detected_fields,
+                    research_text=research_text
+                )
+                case_response = await create_dpia_case_with_claude(case_request)
+                
+                result = {
+                    "case_created": True,
+                    "case_id": case_response.ID,
+                    "case_status": case_response.status,
+                    "case_type": case_type,
+                    "success": True,
+                    "message": f"{case_type} case created successfully with ID: {case_response.ID}"
+                }
+            except Exception as e:
+                logger.error(f"Case creation failed: {e}")
+                result = {
+                    "case_created": False,
+                    "success": False,
+                    "error": str(e),
+                    "message": f"Failed to create case: {str(e)}"
+                }
+            
+            return {"content": [{"text": json.dumps(result)}]}
             
         else:
             raise HTTPException(status_code=400, detail=f"Unknown tool: {tool_name}")
@@ -1010,6 +1210,7 @@ async def create_pega_case(case_request) -> CaseResponse:
         }
         
         logger.info("Sending request to Pega API: %s", PEGA_BASE_URL)
+        logger.info("Payload being sent to Pega: %s", json.dumps(payload, indent=2))
         response = requests.post(
             f"{PEGA_BASE_URL}/cases",
             json=payload,
@@ -1175,24 +1376,42 @@ async def serve_chatbot_interface():
             <style>
                 body { font-family: Arial, sans-serif; margin: 40px; }
                 .container { max-width: 800px; margin: 0 auto; }
-                .status { padding: 20px; background: #f0f8ff; border-radius: 8px; }
+                .error { color: red; }
             </style>
         </head>
         <body>
             <div class="container">
-                <h1>🤖 DPIA Chatbot with Claude LLM</h1>
-                <div class="status">
-                    <h2>✅ Server is Running!</h2>
-                    <p>Your Claude-enhanced DPIA chatbot server is operational.</p>
-                    <h3>Available Endpoints:</h3>
-                    <ul>
-                        <li><strong>Chat API:</strong> <code>POST /chat</code></li>
-                        <li><strong>Analysis API:</strong> <code>POST /analyze</code></li>
-                        <li><strong>Health Check:</strong> <code>GET /health</code></li>
-                        <li><strong>API Documentation:</strong> <a href="/docs">/docs</a></li>
-                    </ul>
-                    <p><em>Note: The full HTML interface (dpia_chatbot_claude.html) was not found. Please ensure the file exists in the server directory.</em></p>
-                </div>
+                <h1>DPIA Chatbot with Claude LLM</h1>
+                <p class="error">Chatbot interface file not found. Please ensure dpia_chatbot_claude.html exists.</p>
+            </div>
+        </body>
+        </html>
+        """)
+
+@app.get("/dpia_chatbot_production.html", response_class=HTMLResponse)
+async def serve_production_chatbot():
+    """Serve the production DPIA chatbot HTML interface"""
+    try:
+        with open("dpia_chatbot_production.html", "r", encoding="utf-8") as f:
+            html_content = f.read()
+        return HTMLResponse(content=html_content)
+    except FileNotFoundError:
+        # Fallback to basic HTML if the file doesn't exist
+        return HTMLResponse(content="""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>DPIA Chatbot - Production</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 40px; }
+                .container { max-width: 800px; margin: 0 auto; }
+                .error { color: red; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>DPIA Chatbot - Production</h1>
+                <p class="error">Production chatbot interface file not found. Please ensure dpia_chatbot_production.html exists.</p>
             </div>
         </body>
         </html>
@@ -1260,19 +1479,104 @@ async def upload_context_file(request: FileUploadRequest):
 async def get_context_status():
     """Get current context status"""
     try:
+        status = claude_integration.get_context_status()
         return {
-            "reference_context_length": len(claude_integration.reference_context),
-            "guidelines_length": len(claude_integration.analysis_guidelines),
-            "has_reference_context": bool(claude_integration.reference_context),
-            "has_guidelines": bool(claude_integration.analysis_guidelines),
-            "context_preview": claude_integration.reference_context[:200] + "..." if claude_integration.reference_context else "No context set"
+            "status": "success",
+            "context_status": status,
+            "timestamp": datetime.now().isoformat()
         }
     except Exception as e:
         logger.error(f"Error getting context status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Galileo AI specific endpoints
+@app.get("/galileo/status")
+async def get_galileo_status():
+    """Get Galileo AI integration status"""
+    try:
+        status = claude_integration.get_context_status()
         return {
-            "error": f"Failed to get context status: {str(e)}"
+            "status": "success",
+            "galileo_status": {
+                "provider": status.get("llm_provider", "Unknown"),
+                "model_name": status.get("model_name", "Unknown"),
+                "monitoring_enabled": status.get("monitoring_enabled", False),
+                "integration_active": status.get("llm_provider") == "Galileo AI"
+            },
+            "context_status": status,
+            "timestamp": datetime.now().isoformat()
         }
+    except Exception as e:
+        logger.error(f"Error getting Galileo AI status: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/galileo/performance")
+async def get_galileo_performance():
+    """Get Galileo AI model performance metrics"""
+    try:
+        metrics = await claude_integration.get_performance_metrics()
+        return {
+            "status": "success",
+            "performance_metrics": metrics,
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error getting Galileo AI performance metrics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/galileo/feedback")
+async def submit_galileo_feedback(feedback_request: Dict[str, Any]):
+    """Submit feedback for Galileo AI model improvement"""
+    try:
+        # Log feedback for Galileo AI monitoring
+        if hasattr(claude_integration, 'galileo_client') and claude_integration.galileo_client:
+            await claude_integration.galileo_client.log_analysis_metrics(
+                analysis_input=feedback_request.get("input_text", ""),
+                analysis_output=None,
+                user_feedback=feedback_request
+            )
+        
+        return {
+            "status": "success",
+            "message": "Feedback submitted successfully",
+            "timestamp": datetime.now().isoformat()
+        }
+    except Exception as e:
+        logger.error(f"Error submitting Galileo AI feedback: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+# Setup RDChat integration routes
+setup_rdchat_routes(app)
 
 if __name__ == "__main__":
     import uvicorn
+    
+    # Log startup information
+    logger.info("🚀 Starting DPIA Chatbot Server with Galileo AI LLM and RDChat Integration")
+    
+    # Get Galileo AI status
+    try:
+        status = claude_integration.get_context_status()
+        model_name = status.get("model_name", "Unknown")
+        provider = status.get("llm_provider", "Unknown")
+        monitoring = status.get("monitoring_enabled", False)
+        
+        logger.info(f"🤖 LLM Provider: {provider}")
+        logger.info(f"📊 Model: {model_name}")
+        logger.info(f"📈 Monitoring: {'Enabled' if monitoring else 'Disabled'}")
+    except Exception as e:
+        logger.warning(f"⚠️  Could not get Galileo AI status: {e}")
+        logger.info("🤖 LLM Provider: Galileo AI (Status Unknown)")
+    
+    logger.info(f"🔗 Pega URL: {PEGA_BASE_URL}")
+    logger.info(f"💬 RDChat Integration: Enabled")
+    logger.info(f"🌐 Server starting on http://0.0.0.0:8080")
+    logger.info("📚 Available endpoints:")
+    logger.info("   • GET  /health - Health check")
+    logger.info("   • POST /chat - Chat with Galileo AI")
+    logger.info("   • POST /analyze - Analyze research text")
+    logger.info("   • GET  /galileo/status - Galileo AI status")
+    logger.info("   • GET  /galileo/performance - Performance metrics")
+    logger.info("   • GET  /docs - API documentation")
+    
     uvicorn.run(app, host="0.0.0.0", port=8080) 

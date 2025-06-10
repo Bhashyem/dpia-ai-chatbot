@@ -1,391 +1,195 @@
-# 🚀 Deployment Guide - DPIA Analysis AI Chatbot
+# 🚀 DPIA Server Deployment Guide
 
-This guide covers multiple deployment options for the DPIA Analysis AI Chatbot, from simple GitHub Pages hosting to full production deployment with backend integration.
+This guide will help you deploy your DPIA server to various cloud platforms so it can work with your GitHub Pages chatbot.
 
-## 📋 Table of Contents
+## 📋 Prerequisites
 
-1. [Quick GitHub Pages Deployment](#quick-github-pages-deployment)
-2. [Local Development Setup](#local-development-setup)
-3. [Production Deployment](#production-deployment)
-4. [Environment Configuration](#environment-configuration)
-5. [Troubleshooting](#troubleshooting)
+- Your DPIA server code (Python FastAPI application)
+- Git repository with your code
+- Account on your chosen cloud platform
 
-## 🌐 Quick GitHub Pages Deployment
+## 🌐 Deployment Options
 
-**Perfect for demos and showcasing the chatbot interface**
+### 1. Heroku (Recommended)
 
-### Step 1: Fork the Repository
-
-1. Go to the [repository page](https://github.com/your-username/dpia-analysis-chatbot)
-2. Click the "Fork" button in the top-right corner
-3. Choose your GitHub account as the destination
-
-### Step 2: Enable GitHub Pages
-
-1. Go to your forked repository
-2. Click on "Settings" tab
-3. Scroll down to "Pages" in the left sidebar
-4. Under "Source", select "Deploy from a branch"
-5. Choose "main" branch and "/ (root)" folder
-6. Click "Save"
-
-### Step 3: Access Your Deployment
-
-Your chatbot will be available at:
-```
-https://your-username.github.io/dpia-analysis-chatbot/
-```
-
-**Note:** GitHub Pages deployment runs in demo mode with simulated AI responses. For full Pega integration, use the production deployment option.
-
-### Step 4: Customize Your Deployment
-
-1. Edit `index.html` and `dpia_chatbot.html` to update:
-   - Repository URLs
-   - Your GitHub username
-   - Contact information
-   - Branding elements
-
-2. Commit and push changes:
-   ```bash
-   git add .
-   git commit -m "Customize deployment"
-   git push origin main
-   ```
-
-## 💻 Local Development Setup
-
-**For development and testing with full backend functionality**
-
-### Prerequisites
-
-- Python 3.9 or higher
-- Git
-- Modern web browser
-
-### Step 1: Clone the Repository
-
+**Step 1: Install Heroku CLI**
 ```bash
-git clone https://github.com/your-username/dpia-analysis-chatbot.git
-cd dpia-analysis-chatbot
+# macOS
+brew install heroku/brew/heroku
+
+# Or download from https://devcenter.heroku.com/articles/heroku-cli
 ```
 
-### Step 2: Set Up Python Environment
-
+**Step 2: Login and Create App**
 ```bash
-# Create virtual environment
-python3 -m venv venv
-
-# Activate virtual environment
-# On macOS/Linux:
-source venv/bin/activate
-# On Windows:
-venv\Scripts\activate
-
-# Install dependencies
-pip install -r requirements.txt
+heroku login
+heroku create dpia-server-production
 ```
 
-### Step 3: Configure Environment
+**Step 3: Add Procfile**
+Create a `Procfile` in your project root:
+```
+web: uvicorn main_claude:app --host=0.0.0.0 --port=${PORT:-8080}
+```
 
+**Step 4: Deploy**
 ```bash
-# Copy environment template
-cp .env.example .env
-
-# Edit .env file with your Pega credentials
-nano .env  # or use your preferred editor
+git add .
+git commit -m "Deploy to Heroku"
+git push heroku main
 ```
 
-Example `.env` configuration:
-```env
-PEGA_BASE_URL=https://your-pega-instance.pegacloud.net/prweb/api/v1
-PEGA_USERNAME=your-username
-PEGA_PASSWORD=your-password
-SERVER_HOST=0.0.0.0
-SERVER_PORT=8080
-DEBUG=true
-```
-
-### Step 4: Start the Development Server
-
+**Step 5: Set Environment Variables**
 ```bash
-python simple_mcp_server.py
+heroku config:set GALILEO_API_KEY=your_api_key
+heroku config:set PEGA_USERNAME=your_username
+heroku config:set PEGA_PASSWORD=your_password
 ```
 
-The server will start on `http://localhost:8080`
+### 2. Render
 
-### Step 5: Access the Application
+**Step 1: Connect GitHub Repository**
+1. Go to [render.com](https://render.com)
+2. Click "New +" → "Web Service"
+3. Connect your GitHub repository
 
-- **Web Interface**: http://localhost:8080/web
-- **Direct Chatbot**: Open `dpia_chatbot.html` in your browser
-- **API Documentation**: http://localhost:8080/docs (FastAPI auto-generated)
+**Step 2: Configure Service**
+- **Name**: `dpia-server`
+- **Environment**: `Python 3`
+- **Build Command**: `pip install -r requirements.txt`
+- **Start Command**: `uvicorn main_claude:app --host=0.0.0.0 --port=$PORT`
 
-## 🏭 Production Deployment
+**Step 3: Add Environment Variables**
+Add your environment variables in the Render dashboard.
 
-**For enterprise deployment with full functionality**
+### 3. Railway
 
-### Option 1: Cloud Platform Deployment
-
-#### Heroku Deployment
-
-1. **Install Heroku CLI**
-   ```bash
-   # macOS
-   brew tap heroku/brew && brew install heroku
-   
-   # Windows/Linux - download from heroku.com
-   ```
-
-2. **Create Heroku App**
-   ```bash
-   heroku create your-dpia-chatbot
-   ```
-
-3. **Set Environment Variables**
-   ```bash
-   heroku config:set PEGA_BASE_URL=https://your-pega-instance.pegacloud.net/prweb/api/v1
-   heroku config:set PEGA_USERNAME=your-username
-   heroku config:set PEGA_PASSWORD=your-password
-   ```
-
-4. **Create Procfile**
-   ```bash
-   echo "web: python simple_mcp_server.py" > Procfile
-   ```
-
-5. **Deploy**
-   ```bash
-   git add .
-   git commit -m "Deploy to Heroku"
-   git push heroku main
-   ```
-
-#### AWS/Azure/GCP Deployment
-
-1. **Containerize the Application**
-   
-   Create `Dockerfile`:
-   ```dockerfile
-   FROM python:3.9-slim
-   
-   WORKDIR /app
-   COPY requirements.txt .
-   RUN pip install -r requirements.txt
-   
-   COPY . .
-   
-   EXPOSE 8080
-   CMD ["python", "simple_mcp_server.py"]
-   ```
-
-2. **Build and Deploy**
-   ```bash
-   docker build -t dpia-chatbot .
-   docker run -p 8080:8080 --env-file .env dpia-chatbot
-   ```
-
-### Option 2: Self-Hosted Deployment
-
-#### Using systemd (Linux)
-
-1. **Create Service File**
-   ```bash
-   sudo nano /etc/systemd/system/dpia-chatbot.service
-   ```
-
-   ```ini
-   [Unit]
-   Description=DPIA Analysis AI Chatbot
-   After=network.target
-   
-   [Service]
-   Type=simple
-   User=www-data
-   WorkingDirectory=/path/to/dpia-analysis-chatbot
-   Environment=PATH=/path/to/dpia-analysis-chatbot/venv/bin
-   ExecStart=/path/to/dpia-analysis-chatbot/venv/bin/python simple_mcp_server.py
-   Restart=always
-   
-   [Install]
-   WantedBy=multi-user.target
-   ```
-
-2. **Enable and Start Service**
-   ```bash
-   sudo systemctl daemon-reload
-   sudo systemctl enable dpia-chatbot
-   sudo systemctl start dpia-chatbot
-   ```
-
-#### Using Nginx Reverse Proxy
-
-1. **Install Nginx**
-   ```bash
-   sudo apt update
-   sudo apt install nginx
-   ```
-
-2. **Configure Nginx**
-   ```bash
-   sudo nano /etc/nginx/sites-available/dpia-chatbot
-   ```
-
-   ```nginx
-   server {
-       listen 80;
-       server_name your-domain.com;
-       
-       location / {
-           proxy_pass http://localhost:8080;
-           proxy_set_header Host $host;
-           proxy_set_header X-Real-IP $remote_addr;
-           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-           proxy_set_header X-Forwarded-Proto $scheme;
-       }
-   }
-   ```
-
-3. **Enable Site**
-   ```bash
-   sudo ln -s /etc/nginx/sites-available/dpia-chatbot /etc/nginx/sites-enabled/
-   sudo nginx -t
-   sudo systemctl restart nginx
-   ```
-
-## ⚙️ Environment Configuration
-
-### Required Environment Variables
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `PEGA_BASE_URL` | Pega API base URL | `https://instance.pegacloud.net/prweb/api/v1` |
-| `PEGA_USERNAME` | Pega username | `your-username` |
-| `PEGA_PASSWORD` | Pega password | `your-password` |
-
-### Optional Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `SERVER_HOST` | Server host | `0.0.0.0` |
-| `SERVER_PORT` | Server port | `8080` |
-| `DEBUG` | Debug mode | `false` |
-
-### Security Considerations
-
-1. **Never commit `.env` files** to version control
-2. **Use environment-specific configurations**
-3. **Implement proper authentication** for production
-4. **Use HTTPS** in production environments
-5. **Regularly rotate credentials**
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-#### 1. Port Already in Use
+**Step 1: Install Railway CLI**
 ```bash
-# Find process using port 8080
-lsof -i :8080
-
-# Kill the process
-kill -9 <PID>
+npm install -g @railway/cli
 ```
 
-#### 2. Python Module Not Found
+**Step 2: Login and Deploy**
 ```bash
-# Ensure virtual environment is activated
-source venv/bin/activate
-
-# Reinstall dependencies
-pip install -r requirements.txt
+railway login
+railway init
+railway up
 ```
 
-#### 3. Pega API Connection Issues
-- Verify `PEGA_BASE_URL` is correct
-- Check username/password credentials
-- Ensure network connectivity to Pega instance
-- Verify API permissions
-
-#### 4. CORS Issues in Browser
-- Ensure proper CORS headers in `simple_mcp_server.py`
-- Use the web interface at `/web` endpoint
-- Check browser console for specific errors
-
-### Debug Mode
-
-Enable debug mode for detailed logging:
+**Step 3: Add Environment Variables**
 ```bash
-export DEBUG=true
-python simple_mcp_server.py
+railway variables set GALILEO_API_KEY=your_api_key
+railway variables set PEGA_USERNAME=your_username
+railway variables set PEGA_PASSWORD=your_password
 ```
 
-### Health Checks
+### 4. Google Cloud Run
 
-Test the deployment:
+**Step 1: Create Dockerfile**
+```dockerfile
+FROM python:3.9-slim
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY . .
+
+CMD ["uvicorn", "main_claude:app", "--host", "0.0.0.0", "--port", "8080"]
+```
+
+**Step 2: Deploy**
 ```bash
-# Check server health
-curl http://localhost:8080/health
-
-# Test API endpoint
-curl -X POST http://localhost:8080/tools/call \
-  -H "Content-Type: application/json" \
-  -d '{"name": "analyze_and_create_dpia", "arguments": {"research_text": "test"}}'
+gcloud run deploy dpia-server \
+  --source . \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated
 ```
 
-## 📊 Monitoring and Analytics
+## 🔧 Update GitHub Pages Configuration
 
-### Application Monitoring
+After deploying, update your server URL in the chatbot:
 
-1. **Health Endpoint**: `/health`
-2. **Metrics Endpoint**: `/metrics` (if implemented)
-3. **Logs**: Check application logs for errors
+1. **Option 1: Update the code directly**
+   - Edit `dpia_chatbot_production.html`
+   - Replace `https://dpia-server-production.herokuapp.com` with your actual server URL
 
-### Performance Optimization
+2. **Option 2: Use URL parameter**
+   - Visit your GitHub Pages site with: `?api=YOUR_SERVER_URL`
+   - Example: `https://bhashyem.github.io/dpia-ai-chatbot/dpia_chatbot_production.html?api=https://your-server.herokuapp.com`
 
-1. **Enable caching** for static assets
-2. **Use CDN** for global distribution
-3. **Implement rate limiting** for API endpoints
-4. **Monitor resource usage**
+## 🔍 Testing Your Deployment
 
-## 🔄 Updates and Maintenance
-
-### Updating the Application
-
-1. **Pull latest changes**
+1. **Check Server Health**
    ```bash
-   git pull origin main
+   curl https://your-server-url.com/health
    ```
 
-2. **Update dependencies**
+2. **Test API Endpoint**
    ```bash
-   pip install -r requirements.txt --upgrade
+   curl -X POST https://your-server-url.com/analyze \
+     -H "Content-Type: application/json" \
+     -d '{"research_text": "Test analysis"}'
    ```
 
-3. **Restart services**
-   ```bash
-   sudo systemctl restart dpia-chatbot
-   ```
+3. **Visit Your Chatbot**
+   - Go to: `https://bhashyem.github.io/dpia-ai-chatbot/dpia_chatbot_production.html`
+   - Should show "✅ Server Connected" instead of "🔴 Server Disconnected"
 
-### Backup and Recovery
+## 🛠️ Troubleshooting
 
-1. **Backup configuration files**
-2. **Document environment variables**
-3. **Test recovery procedures**
+### Common Issues:
+
+1. **CORS Errors**
+   - Make sure your server includes CORS middleware
+   - Check that your server allows requests from `bhashyem.github.io`
+
+2. **Environment Variables**
+   - Ensure all required environment variables are set on your cloud platform
+   - Check logs for missing configuration
+
+3. **Port Configuration**
+   - Most cloud platforms use dynamic ports
+   - Make sure your app uses `PORT` environment variable
+
+4. **Dependencies**
+   - Ensure `requirements.txt` includes all dependencies
+   - Check that Python version matches your local development
+
+### Checking Logs:
+
+**Heroku:**
+```bash
+heroku logs --tail -a dpia-server-production
+```
+
+**Render:**
+Check logs in the Render dashboard
+
+**Railway:**
+```bash
+railway logs
+```
+
+## 📝 Next Steps
+
+1. Deploy your server using one of the methods above
+2. Update the API URL in your GitHub Pages chatbot
+3. Test the connection
+4. Your chatbot should now work on GitHub Pages!
+
+## 🔒 Security Notes
+
+- Never commit API keys or passwords to your repository
+- Use environment variables for all sensitive configuration
+- Consider adding authentication to your API endpoints
+- Enable HTTPS on your deployed server
 
 ## 📞 Support
 
-For deployment issues:
-
-1. **Check the logs** first
-2. **Review this guide** for common solutions
-3. **Open an issue** on GitHub with:
-   - Deployment method used
-   - Error messages
-   - Environment details
-   - Steps to reproduce
-
----
-
-**Happy Deploying! 🚀**
-
-*For additional support, please refer to the main [README.md](README.md) or open an issue on GitHub.* 
+If you encounter issues:
+1. Check the server logs
+2. Verify environment variables are set correctly
+3. Test API endpoints directly
+4. Check CORS configuration 

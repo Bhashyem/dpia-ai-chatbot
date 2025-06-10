@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🤖 DPIA Analysis AI Chatbot - Production</title>
+    <title>🤖 Digital Pathology Chatbot - AI-Enhanced Case Type Suggestion</title>
     <style>
         * {
             margin: 0;
@@ -15,57 +15,38 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             padding: 20px;
         }
 
-        .chatbot-container {
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
             background: white;
             border-radius: 20px;
             box-shadow: 0 25px 50px rgba(0,0,0,0.15);
-            width: 100%;
-            max-width: 800px;
-            height: 80vh;
-            display: flex;
-            flex-direction: column;
             overflow: hidden;
         }
 
-        .chatbot-header {
+        .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
+            padding: 30px;
             text-align: center;
-            border-radius: 20px 20px 0 0;
         }
 
-        .chatbot-header h1 {
-            font-size: 1.8em;
-            margin-bottom: 5px;
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
         }
 
-        .chatbot-header p {
+        .header p {
             opacity: 0.9;
-            font-size: 0.9em;
+            font-size: 1.1em;
         }
 
-        .connection-status {
-            padding: 10px;
-            text-align: center;
-            font-size: 0.9em;
-            border-bottom: 1px solid #e1e5e9;
-        }
-
-        .connection-status.connected {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .connection-status.disconnected {
-            background: #f8d7da;
-            color: #721c24;
+        .chat-container {
+            display: flex;
+            height: 600px;
         }
 
         .chat-messages {
@@ -77,147 +58,258 @@
 
         .message {
             margin-bottom: 15px;
-            display: flex;
-            align-items: flex-start;
-        }
-
-        .message.user {
-            justify-content: flex-end;
-        }
-
-        .message.bot {
-            justify-content: flex-start;
-        }
-
-        .message-content {
-            max-width: 70%;
-            padding: 12px 16px;
-            border-radius: 18px;
+            padding: 15px;
+            border-radius: 15px;
+            max-width: 80%;
             word-wrap: break-word;
         }
 
-        .message.user .message-content {
-            background: #007bff;
-            color: white;
-            border-bottom-right-radius: 4px;
-        }
-
-        .message.bot .message-content {
-            background: white;
-            color: #333;
-            border: 1px solid #e1e5e9;
-            border-bottom-left-radius: 4px;
-        }
-
-        .message-avatar {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            margin: 0 8px;
-        }
-
-        .message.user .message-avatar {
-            background: #007bff;
-            color: white;
-        }
-
-        .message.bot .message-avatar {
+        .message.user {
             background: #667eea;
             color: white;
+            margin-left: auto;
+            text-align: right;
         }
 
-        .interactive-prompt {
+        .message.bot {
+            background: white;
+            border: 2px solid #e1e5e9;
+            margin-right: auto;
+        }
+
+        .message.analysis {
             background: #e7f3ff;
-            border: 1px solid #b3d9ff;
-            border-radius: 12px;
-            padding: 15px;
-            margin: 10px 0;
+            border: 2px solid #b3d7ff;
+            margin-right: auto;
+            max-width: 95%;
         }
 
-        .prompt-question {
-            font-weight: 600;
+        .analysis-section {
+            margin-bottom: 20px;
+        }
+
+        .analysis-section h4 {
+            color: #333;
             margin-bottom: 10px;
-            color: #0056b3;
+            font-size: 1.1em;
         }
 
-        .prompt-options {
-            margin: 10px 0;
+        .field-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
         }
 
-        .prompt-option {
-            display: block;
-            margin: 5px 0;
-            cursor: pointer;
-            padding: 8px 12px;
+        .field-item {
+            background: white;
+            padding: 10px;
             border-radius: 8px;
-            transition: background-color 0.2s;
+            border: 1px solid #ddd;
         }
 
-        .prompt-option:hover {
-            background: #cce7ff;
+        .field-item.detected {
+            border-color: #28a745;
+            background: #f8fff9;
         }
 
-        .prompt-option input[type="radio"] {
-            margin-right: 8px;
+        .field-item.missing {
+            border-color: #dc3545;
+            background: #fff8f8;
+        }
+
+        .field-label {
+            font-weight: 600;
+            color: #333;
+            font-size: 0.9em;
+        }
+
+        .field-value {
+            color: #666;
+            font-size: 0.85em;
+            margin-top: 5px;
+        }
+
+        .case-type-suggestion {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .case-type-suggestion h3 {
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .case-type-suggestion .confidence {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 10px;
+        }
+
+        .case-type-cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .case-type-card {
+            background: white;
+            border: 2px solid #e1e5e9;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .case-type-card:hover {
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.2);
+        }
+
+        .case-type-card.recommended {
+            border-color: #28a745;
+            background: #f8fff9;
+        }
+
+        .case-type-card.recommended::before {
+            content: "🎯 AI Recommended";
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #28a745;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+        }
+
+        .case-type-card h4 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .case-type-card p {
+            color: #666;
+            font-size: 0.9em;
+            line-height: 1.4;
+        }
+
+        .case-type-card .icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .interactive-prompts {
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .interactive-prompts h4 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+
+        /* AI Interactive Prompts Styles */
+        .ai-prompts-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+
+        .ai-prompt-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .ai-prompt-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .prompt-icon {
+            font-size: 1.2em;
+            margin-right: 12px;
+            color: #667eea;
+            flex-shrink: 0;
+        }
+
+        .prompt-text {
+            color: #333;
+            font-size: 0.95em;
+            line-height: 1.4;
+            font-style: italic;
+        }
+
+        .prompt-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            background: white;
+            border-radius: 10px;
+            border: 1px solid #ddd;
+        }
+
+        .prompt-label {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 8px;
         }
 
         .prompt-input {
             width: 100%;
             padding: 10px;
-            border: 1px solid #ddd;
+            border: 2px solid #e1e5e9;
             border-radius: 8px;
             font-size: 14px;
-            margin: 8px 0;
         }
 
-        .prompt-suggestions {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
+        .prompt-input:focus {
+            outline: none;
+            border-color: #667eea;
         }
 
-        .submit-responses-btn {
-            background: #28a745;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 8px;
+        select.prompt-input {
+            background-color: white;
             cursor: pointer;
-            font-weight: 600;
-            margin-top: 10px;
-            transition: background-color 0.2s;
         }
 
-        .submit-responses-btn:hover {
-            background: #218838;
+        select.prompt-input option {
+            padding: 8px;
         }
 
-        .chat-input-area {
+        .chat-input-container {
             padding: 20px;
+            border-top: 2px solid #e1e5e9;
             background: white;
-            border-top: 1px solid #e1e5e9;
-        }
-
-        .input-container {
-            display: flex;
-            gap: 10px;
-            align-items: flex-end;
         }
 
         .chat-input {
-            flex: 1;
-            padding: 12px 16px;
+            width: 100%;
+            padding: 15px;
             border: 2px solid #e1e5e9;
-            border-radius: 20px;
-            font-size: 14px;
-            resize: none;
-            min-height: 44px;
-            max-height: 120px;
-            font-family: inherit;
+            border-radius: 25px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 50px;
         }
 
         .chat-input:focus {
@@ -225,273 +317,359 @@
             border-color: #667eea;
         }
 
-        .send-btn {
-            background: #667eea;
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 50%;
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
-            transition: background-color 0.2s;
+            transition: all 0.3s ease;
         }
 
-        .send-btn:hover:not(:disabled) {
-            background: #5a6fd8;
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
         }
 
-        .send-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
         }
 
-        .typing-indicator {
-            display: none;
-            align-items: center;
-            padding: 10px 0;
+        .btn-secondary {
+            background: #6c757d;
         }
 
-        .typing-dots {
-            display: flex;
-            gap: 4px;
-            margin-left: 8px;
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
         }
 
-        .typing-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #667eea;
-            animation: typing 1.4s infinite ease-in-out;
+        .btn-info {
+            background: #17a2b8;
+            color: white;
         }
 
-        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
-        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
-
-        @keyframes typing {
-            0%, 80%, 100% { transform: scale(0); }
-            40% { transform: scale(1); }
-        }
-
-        .quick-actions {
-            margin: 15px 0;
-        }
-
-        .quick-action-btn {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
-            color: #495057;
-            padding: 8px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            margin: 5px;
-            font-size: 0.9em;
-            transition: all 0.2s;
-        }
-
-        .quick-action-btn:hover {
-            background: #e9ecef;
-            border-color: #adb5bd;
-        }
-
-        .field-status {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 10px;
-            margin: 15px 0;
-        }
-
-        .field-item {
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 0.9em;
-        }
-
-        .field-detected {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
-        }
-
-        .field-missing {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-        }
-
-        .case-success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
+        .status {
             padding: 15px;
-            border-radius: 8px;
-            margin: 10px 0;
+            border-radius: 10px;
+            margin: 15px 0;
+            font-weight: 600;
         }
 
-        @media (max-width: 768px) {
-            .chatbot-container {
-                height: 90vh;
-                margin: 10px;
-            }
-            
-            .field-status {
-                grid-template-columns: 1fr;
-            }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status.info {
+            background: #e7f3ff;
+            color: #0056b3;
+            border: 1px solid #b3d7ff;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .navigation {
+            text-align: center;
+            padding: 20px;
+            border-top: 1px solid #e1e5e9;
+        }
+
+        .nav-link {
+            display: inline-block;
+            margin: 0 15px;
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .nav-link:hover {
+            text-decoration: underline;
+        }
+
+        .confidence-bar {
+            background: #e1e5e9;
+            height: 8px;
+            border-radius: 4px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #dc3545 0%, #ffc107 50%, #28a745 100%);
+            transition: width 0.3s ease;
+        }
+
+        .source-badge {
+            background: #e1e5e9;
+            padding: 2px 5px;
+            border-radius: 5px;
+            font-size: 0.8em;
+            margin-left: 5px;
+        }
+
+        .source-badge.galileo_ai {
+            background: #28a745;
+            color: white;
+        }
+
+        .source-badge.local_keywords {
+            background: #ffc107;
+            color: #212529;
         }
     </style>
 </head>
 <body>
-    <div class="chatbot-container">
-        <div class="chatbot-header">
-            <h1>🤖 DPIA Analysis AI Chatbot</h1>
-            <p>Intelligent analysis and automated DPIA case creation</p>
+    <div class="container">
+        <div class="header">
+            <h1>🤖 Digital Pathology Chatbot with AI Case Type Suggestion</h1>
+            <p>Powered by Galileo AI - Intelligent analysis for CALM vs DPIA recommendations</p>
         </div>
         
-        <div id="connectionStatus" class="connection-status disconnected">
-            🔴 Checking server connection...
-        </div>
-        
+        <div class="chat-container">
         <div class="chat-messages" id="chatMessages">
             <div class="message bot">
-                <div class="message-avatar">🤖</div>
-                <div class="message-content">
-                    👋 <strong>Hello! I'm your DPIA Analysis AI assistant.</strong><br><br>
-                    I can help you analyze research text and automatically create DPIA cases in your Pega system.<br><br>
-                    📝 <strong>Just paste your research text and I'll:</strong><br>
-                    • Detect key information automatically<br>
-                    • Ask for any missing mandatory fields<br>
-                    • Create a complete DPIA case<br><br>
-                    <div class="quick-actions">
-                        <button class="quick-action-btn" onclick="sendQuickMessage('We have 4 groups (healthy, injured+vehicle control, treatment 1(Rmim), treatment 2 (Wmim).Lung stem cells (AT2-TRITC) and total cells (DAPI) are stained. N=9-10 per group were stained and need imaging and quantification.')">🧪 Try Sample Text</button>
-                        <button class="quick-action-btn" onclick="sendQuickMessage('Help me understand how this works')">❓ How it Works</button>
-                    </div>
+                    <strong>🤖 Digital Pathology Assistant:</strong> Welcome! I'm your AI-powered Digital Pathology assistant. I can analyze your research text and intelligently suggest whether it's suitable for <strong>CALM</strong> (Laboratory Compliance) or <strong>DPIA</strong> (Digital Pathology and Image Analysis) case creation.
+                    <br><br>
+                    Please paste your research text below, and I'll provide:
+                    <ul style="margin-top: 10px; padding-left: 20px;">
+                        <li>🔍 Comprehensive field analysis</li>
+                        <li>🎯 AI-driven case type recommendation</li>
+                        <li>📊 Confidence scores and insights</li>
+                        <li>⚡ Automated case creation</li>
+                    </ul>
                 </div>
             </div>
         </div>
         
-        <div class="typing-indicator" id="typingIndicator">
-            <div class="message-avatar">🤖</div>
-            <div>AI is thinking</div>
-            <div class="typing-dots">
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-                <div class="typing-dot"></div>
-            </div>
-        </div>
-        
-        <div class="chat-input-area">
-            <div class="input-container">
+        <div class="chat-input-container">
                 <textarea 
                     id="chatInput" 
                     class="chat-input" 
-                    placeholder="Paste your research text here for analysis..."
-                    rows="1"
+                placeholder="Paste your research text here (e.g., 'Leica SP8 - Bldg 12 Time-lapse imaging to monitor small molecule distribution in mammalian cells')..."
+                rows="3"
                 ></textarea>
-                <button id="sendBtn" class="send-btn" onclick="sendMessage()">
-                    ➤
+            <div class="button-group">
+                <button onclick="analyzeResearchText()" class="btn">
+                    🔍 Analyze & Get AI Recommendation
+                </button>
+                <button onclick="clearChat()" class="btn btn-secondary">
+                    🗑️ Clear Chat
+                </button>
+                <button onclick="showExamples()" class="btn btn-warning">
+                    💡 Show Examples
+                </button>
+                <button onclick="testValidation()" class="btn btn-secondary">
+                    🔧 Test Validation
+                </button>
+                <button onclick="testCaseTypeRecommendation()" class="btn btn-info">
+                    🧪 Test Case Type Logic
                 </button>
             </div>
+        </div>
+
+        <div class="navigation">
+            <a href="index.html" class="nav-link">🏠 Home</a>
+            <a href="context_upload.html" class="nav-link">📚 Context Manager</a>
+            <a href="#" class="nav-link" onclick="window.open(API_BASE + '/docs', '_blank')">📖 API Docs</a>
         </div>
     </div>
 
     <script>
-        const CONFIG = {
-            // Production API endpoint - change this to your deployed server
-            API_URL: 'http://localhost:8080/tools/call',
-            // For production deployment:
-            // API_URL: 'https://your-backend-server.herokuapp.com/tools/call'
-        };
-
-        let currentConversation = [];
-        let awaitingPromptResponses = false;
-        let currentPrompts = [];
-        let serverConnected = false;
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', function() {
-            const chatInput = document.getElementById('chatInput');
+        // Auto-detect API base URL with multiple deployment options
+        function getApiBase() {
+            // Check if we're on GitHub Pages
+            if (window.location.hostname === 'bhashyem.github.io') {
+                // Try multiple potential server URLs in order of preference
+                const potentialServers = [
+                    'https://dpia-server-production.herokuapp.com',  // Heroku deployment
+                    'https://dpia-server.onrender.com',             // Render deployment
+                    'https://dpia-server.railway.app',              // Railway deployment
+                    'https://dpia-server.vercel.app',               // Vercel deployment
+                    'http://localhost:8080'                         // Local fallback
+                ];
+                
+                // For now, return the first option - you'll need to update this with your actual deployed server URL
+                return potentialServers[0];
+            }
             
-            // Check server connection
-            checkServerConnection();
+            // Check for custom API URL in URL parameters (allows users to specify their own server)
+            const urlParams = new URLSearchParams(window.location.search);
+            const customApi = urlParams.get('api');
+            if (customApi) {
+                return customApi;
+            }
             
-            // Auto-resize textarea
-            chatInput.addEventListener('input', function() {
-                this.style.height = 'auto';
-                this.style.height = Math.min(this.scrollHeight, 120) + 'px';
-            });
-
-            // Send on Enter (but allow Shift+Enter for new lines)
-            chatInput.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
-        });
-
+            // Default to localhost for local development
+            return 'http://localhost:8080';
+        }
+        
+        const API_BASE = getApiBase();
+        console.log('DPIA API Base URL:', API_BASE);
+        
+        // Add server status checking
+        let serverStatus = 'checking';
+        
+        // Check server connection on page load
         async function checkServerConnection() {
-            try {
-                const response = await fetch('http://localhost:8080/health');
-                if (response.ok) {
-                    serverConnected = true;
-                    updateConnectionStatus(true);
-                } else {
-                    throw new Error('Server not responding');
-                }
-            } catch (error) {
-                serverConnected = false;
-                updateConnectionStatus(false);
-            }
-        }
-
-        function updateConnectionStatus(connected) {
-            const statusElement = document.getElementById('connectionStatus');
-            if (connected) {
-                statusElement.className = 'connection-status connected';
-                statusElement.innerHTML = '🟢 Connected to DPIA Analysis Server';
-            } else {
-                statusElement.className = 'connection-status disconnected';
-                statusElement.innerHTML = '🔴 Server Offline - Demo Mode Only';
-            }
-        }
-
-        function sendQuickMessage(message) {
-            document.getElementById('chatInput').value = message;
-            sendMessage();
-        }
-
-        async function sendMessage() {
-            const input = document.getElementById('chatInput');
-            const message = input.value.trim();
+            const statusElement = document.querySelector('.header p');
             
-            if (!message) return;
-
-            // Add user message to chat
-            addMessage('user', message);
-            input.value = '';
-            input.style.height = 'auto';
-
-            // Show typing indicator
-            showTyping();
-
             try {
-                if (serverConnected) {
-                    await analyzeWithRealAPI(message);
+                const response = await fetch(`${API_BASE}/health`, {
+                    method: 'GET',
+                    timeout: 5000
+                });
+                
+                if (response.ok) {
+                    serverStatus = 'connected';
+                    statusElement.innerHTML = `Powered by Galileo AI - <span style="color: #28a745;">✅ Server Connected</span><br><small>API: ${API_BASE}</small>`;
                 } else {
-                    await analyzeWithDemo(message);
+                    throw new Error('Server responded with error');
                 }
             } catch (error) {
-                hideTyping();
-                addMessage('bot', `❌ I encountered an error: ${error.message}<br><br>💡 <strong>Troubleshooting:</strong><br>• Make sure the MCP server is running on localhost:8080<br>• Check your network connection<br>• Try refreshing the page`);
+                serverStatus = 'disconnected';
+                statusElement.innerHTML = `
+                    <span style="color: #dc3545;">🔴 Server Disconnected</span><br>
+                    <small>API: ${API_BASE}</small><br>
+                    <small style="color: #ffc107;">
+                        ${window.location.hostname === 'bhashyem.github.io' ? 
+                            'Server deployment required for GitHub Pages. See instructions below.' : 
+                            'Make sure your local server is running on port 8080.'
+                        }
+                    </small>
+                `;
+                
+                // Add deployment instructions for GitHub Pages
+                if (window.location.hostname === 'bhashyem.github.io') {
+                    addDeploymentInstructions();
+                }
+            }
+        }
+        
+        // Add deployment instructions
+        function addDeploymentInstructions() {
+            const deploymentInfo = `
+                <div class="message bot" style="background: #fff3cd; border-left: 4px solid #ffc107;">
+                    <strong>🚀 Server Deployment Required</strong><br><br>
+                    To use this chatbot on GitHub Pages, you need to deploy your server to a cloud platform:<br><br>
+                    
+                    <strong>Quick Deployment Options:</strong><br>
+                    • <strong>Heroku:</strong> <code>git push heroku main</code><br>
+                    • <strong>Render:</strong> Connect your GitHub repo<br>
+                    • <strong>Railway:</strong> <code>railway deploy</code><br>
+                    • <strong>Vercel:</strong> <code>vercel --prod</code><br><br>
+                    
+                    <strong>For Local Testing:</strong><br>
+                    Visit: <a href="http://localhost:8080/dpia_chatbot_production.html" target="_blank">http://localhost:8080/dpia_chatbot_production.html</a><br><br>
+                    
+                    <strong>Custom Server:</strong><br>
+                    Add <code>?api=YOUR_SERVER_URL</code> to the URL to use a custom server.
+                </div>
+            `;
+            
+            const messagesContainer = document.getElementById('chatMessages');
+            messagesContainer.innerHTML = deploymentInfo + messagesContainer.innerHTML;
+        }
+
+        // Global variables
+        let currentAnalysis = null;
+        let currentCaseTypeRecommendation = null;
+        let currentResearchText = null;
+
+        // Add message to chat
+        function addMessage(content, type = 'bot', isHtml = false) {
+            const messagesContainer = document.getElementById('chatMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}`;
+            
+            if (isHtml) {
+                messageDiv.innerHTML = content;
+                } else {
+                messageDiv.textContent = content;
+            }
+            
+            messagesContainer.appendChild(messageDiv);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Show loading message
+        function showLoading(message = 'Analyzing with Galileo AI...') {
+            if (serverStatus === 'disconnected') {
+                addMessage('❌ Cannot analyze - server is not connected. Please check deployment instructions above.', 'bot');
+                return false;
+            }
+            addMessage(`<div class="loading"></div> ${message}`, 'bot', true);
+            return true;
+        }
+
+        // Remove last message (for removing loading)
+        function removeLastMessage() {
+            const messagesContainer = document.getElementById('chatMessages');
+            const lastMessage = messagesContainer.lastElementChild;
+            if (lastMessage) {
+                lastMessage.remove();
             }
         }
 
-        async function analyzeWithRealAPI(researchText) {
+        // Analyze research text with AI case type suggestion
+        async function analyzeResearchText() {
+            const input = document.getElementById('chatInput');
+            const researchText = input.value.trim();
+            
+            if (!researchText) {
+                addMessage('❌ Please enter some research text to analyze.', 'bot');
+                return;
+            }
+
+            // Store research text globally
+            currentResearchText = researchText;
+            
+            // Add user message
+            addMessage(researchText, 'user');
+            
+            // Show loading (returns false if server disconnected)
+            if (!showLoading('🧠 Galileo AI is analyzing your research text and determining the best case type... (This may take 20-30 seconds)')) {
+                return;
+            }
+            
             try {
-                const response = await fetch(CONFIG.API_URL, {
+                // Create AbortController for timeout handling
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+                
+                // Call the enhanced analysis endpoint with timeout
+                const response = await fetch(`${API_BASE}/tools/call`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -500,366 +678,739 @@
                         name: 'analyze_and_create_dpia',
                         arguments: {
                             research_text: researchText,
-                            action: 'analyze_only'
+                            auto_create: false,
+                            include_case_type_suggestion: true
                         }
-                    })
+                    }),
+                    signal: controller.signal
                 });
 
+                clearTimeout(timeoutId); // Clear timeout if request completes
+
                 if (!response.ok) {
-                    throw new Error(`Server error: ${response.status}`);
+                    throw new Error(`Server responded with status: ${response.status}`);
                 }
 
-                const result = await response.json();
-                hideTyping();
-
-                if (result.content && result.content[0] && result.content[0].text) {
-                    const analysisResult = JSON.parse(result.content[0].text);
-                    displayAnalysisResult(analysisResult);
+                const data = await response.json();
+                removeLastMessage(); // Remove loading message
+                
+                if (data.content && data.content[0] && data.content[0].text) {
+                    const result = JSON.parse(data.content[0].text);
+                    currentAnalysis = result.analysis;
+                    
+                    // Display comprehensive analysis with AI case type suggestion
+                    displayAnalysisWithCaseTypeSuggestion(result);
+                    
                 } else {
-                    throw new Error('Invalid response format from server');
+                    addMessage('❌ Failed to analyze research text. Please try again.', 'bot');
+                    console.error('Unexpected response format:', data);
                 }
+                
             } catch (error) {
-                hideTyping();
-                console.error('API Error:', error);
-                addMessage('bot', `❌ Failed to connect to the analysis server.<br><br>🔧 <strong>Error:</strong> ${error.message}<br><br>💡 <strong>Falling back to demo mode...</strong>`);
-                await analyzeWithDemo(researchText);
-            }
-        }
-
-        function displayAnalysisResult(result) {
-            let response = `🔍 <strong>Analysis Complete!</strong><br><br>`;
-            response += `I've analyzed your research text and here's what I found:<br><br>`;
-            
-            // Fix: Access detected_fields from the correct nested structure
-            const detectedFields = result.analysis?.detected_fields || result.detected_fields || {};
-            const interactivePrompts = result.analysis?.interactive_prompts || result.interactive_prompts || [];
-            
-            // Show detected fields
-            response += `<div class="field-status">`;
-            Object.entries(detectedFields).forEach(([field, value]) => {
-                const isDetected = value !== "Unknown" && value && value.trim();
-                response += `<div class="field-item ${isDetected ? 'field-detected' : 'field-missing'}">
-                    <strong>${field}:</strong><br>${isDetected ? '✅' : '❌'} ${value || 'Not detected'}
-                </div>`;
-            });
-            response += `</div>`;
-
-            if (interactivePrompts && interactivePrompts.length > 0) {
-                response += `<br>🤖 <strong>I need to ask you about ${interactivePrompts.length} missing fields to create a complete DPIA case:</strong>`;
-                addMessage('bot', response);
+                removeLastMessage();
+                console.error('Analysis error:', error);
                 
-                setTimeout(() => {
-                    showInteractivePrompts(interactivePrompts);
-                }, 500);
-            } else {
-                // All fields detected - check if case was already created
-                if (result.case_created && result.case_id) {
-                    // Case was already created in the analysis call
-                    response += `<br>✅ <strong>All fields detected! DPIA case created automatically.</strong>`;
-                    addMessage('bot', response);
-                    
-                    // Show case creation result
-                    setTimeout(() => {
-                        displayCaseCreationResult(result);
-                    }, 500);
+                if (error.name === 'AbortError') {
+                    addMessage('⏱️ Analysis timed out after 60 seconds. The server might be busy. Please try again.', 'bot');
+                } else if (error.message.includes('Failed to fetch')) {
+                    addMessage('🔌 Connection error. Please check if the server is running and try again.', 'bot');
                 } else {
-                    // All fields detected but case not created yet - create it now
-                    response += `<br>✅ <strong>All fields detected! Creating DPIA case now...</strong>`;
-                    addMessage('bot', response);
-                    
-                    // Show processing and create case
-                    setTimeout(async () => {
-                        showTyping();
-                        await createDPIACaseAutomatic();
-                    }, 500);
+                    addMessage(`❌ Error analyzing research text: ${error.message}. Please check if the server is running.`, 'bot');
                 }
             }
+            
+            // Clear input
+            input.value = '';
         }
 
-        async function createDPIACaseAutomatic() {
-            try {
-                // Get the original research text from the first user message
-                const originalText = currentConversation.find(msg => msg.type === 'user')?.content || '';
+        // Display analysis results with AI case type suggestion
+        function displayAnalysisWithCaseTypeSuggestion(result) {
+            const analysis = result.analysis;
+            
+            // Enhanced debugging for Galileo AI response
+            console.log('🔍 Full result object:', result);
+            console.log('🔍 Analysis object:', analysis);
+            console.log('🔍 Analysis keys:', Object.keys(analysis));
+            if (analysis.detected_fields) {
+                console.log('🔍 Detected fields keys:', Object.keys(analysis.detected_fields));
+                console.log('🔍 Detected fields values:', analysis.detected_fields);
+            }
+            
+            // Check for case type recommendation in various locations
+            console.log('🔍 Direct recommended_case_type:', analysis.recommended_case_type);
+            console.log('🔍 Detected fields recommended_case_type:', analysis.detected_fields?.recommended_case_type);
+            console.log('🔍 Case type confidence:', analysis.case_type_confidence);
+            console.log('🔍 Case type reasoning:', analysis.case_type_reasoning);
+            
+            // Get AI case type recommendation
+            const caseTypeRecommendation = determineCaseTypeRecommendation(analysis);
+            currentCaseTypeRecommendation = caseTypeRecommendation;
+            
+            console.log('🎯 Final case type recommendation:', caseTypeRecommendation);
+            
+            let analysisHtml = `
+                <div class="analysis-section">
+                    <h4>🧠 AI Analysis Summary</h4>
+                    <p><strong>Analysis:</strong> ${analysis.analysis_summary || 'Research text analyzed successfully'}</p>
+                </div>
+            `;
+
+            // Add AI case type suggestion with enhanced display
+            const sourceIcon = caseTypeRecommendation.source === 'galileo_ai' ? '🤖' : 
+                              caseTypeRecommendation.source === 'simple_fallback' ? '🔧' : '🔍';
+            const sourceName = caseTypeRecommendation.source === 'galileo_ai' ? 'Galileo AI' : 
+                              caseTypeRecommendation.source === 'simple_fallback' ? 'Simple Fallback' : 'Keyword Analysis';
+            
+            analysisHtml += `
+                <div class="case-type-suggestion">
+                    <h3>🎯 AI Recommendation: ${caseTypeRecommendation.recommended_type}</h3>
+                    <p>${caseTypeRecommendation.reasoning}</p>
+                    <div class="confidence">
+                        Confidence: ${Math.round(caseTypeRecommendation.confidence * 100)}%
+                        <span class="source-badge ${caseTypeRecommendation.source}">${sourceIcon} ${sourceName}</span>
+                        <div class="confidence-bar">
+                            <div class="confidence-fill" style="width: ${caseTypeRecommendation.confidence * 100}%"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Add case type selection cards
+            analysisHtml += `
+                <div class="case-type-cards">
+                    <div class="case-type-card ${caseTypeRecommendation.recommended_type === 'DPIA' ? 'recommended' : ''}" 
+                         onclick="selectCaseType('DPIA')">
+                        <div class="icon">🛡️</div>
+                        <h4>DPIA</h4>
+                        <p>Digital Pathology and Image Analysis - For data protection and privacy compliance in digital pathology workflows</p>
+                    </div>
+                    <div class="case-type-card ${caseTypeRecommendation.recommended_type === 'CALM' ? 'recommended' : ''}" 
+                         onclick="selectCaseType('CALM')">
+                        <div class="icon">🧬</div>
+                        <h4>CALM</h4>
+                        <p>Laboratory Compliance and Sample Management - For laboratory compliance and sample management workflows</p>
+                    </div>
+                </div>
+            `;
+
+            // Add confidence scores if available
+            if (analysis.confidence_scores && Object.keys(analysis.confidence_scores).length > 0) {
+                analysisHtml += `
+                    <div class="analysis-section">
+                        <h4>📊 Field Detection Confidence</h4>
+                        <div class="field-grid">
+                `;
                 
-                const response = await fetch(CONFIG.API_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        name: 'analyze_and_create_dpia',
-                        arguments: {
-                            research_text: originalText,
-                            auto_create: true
-                        }
-                    })
+                for (const [field, confidence] of Object.entries(analysis.confidence_scores)) {
+                    // Skip data protection fields for Digital Pathology use case
+                    if (['data_volume', 'sensitive_data', 'cross_border_transfer'].includes(field)) {
+                        continue;
+                    }
+                    
+                    const percentage = Math.round(confidence * 100);
+                    analysisHtml += `
+                        <div class="field-item">
+                            <div class="field-label">${field}</div>
+                            <div class="confidence-bar">
+                                <div class="confidence-fill" style="width: ${percentage}%"></div>
+                            </div>
+                            <div class="field-value">${percentage}% confidence</div>
+                        </div>
+                    `;
+                }
+                
+                analysisHtml += `
+                        </div>
+                    </div>
+                `;
+            }
+
+            // Add field detection grid
+            if (analysis.detected_fields && Object.keys(analysis.detected_fields).length > 0) {
+                analysisHtml += `
+                    <div class="analysis-section">
+                        <h4>🔍 Field Detection Results</h4>
+                        <div class="field-grid">
+                `;
+                
+                const fieldMapping = {
+                    'therapeutic_area': 'Therapeutic Area',
+                    'pi_name': 'PI',
+                    'pathologist': 'Pathologist',
+                    'assay_type': 'Assay Type/Staining Type',
+                    'procedure_type': 'Procedure Type',
+                    'project_title': 'Project Title',
+                    'request_purpose': 'Request Purpose',
+                    'biospecimen_type': 'Biospecimen Type'
+                };
+                
+                for (const [field, value] of Object.entries(analysis.detected_fields)) {
+                    // Skip data protection fields for Digital Pathology use case
+                    if (['data_volume', 'sensitive_data', 'cross_border_transfer'].includes(field)) {
+                        continue;
+                    }
+                    
+                    const displayName = fieldMapping[field] || field;
+                    // Special handling for assay_type - "Other" is a valid value
+                    let isDetected;
+                    if (field === 'assay_type') {
+                        isDetected = value && value !== 'Unknown' && value !== '';
+                    } else {
+                        isDetected = value && value !== 'Unknown' && value !== '' && value.trim() !== '';
+                    }
+                    const itemClass = isDetected ? 'detected' : 'missing';
+                    
+                    analysisHtml += `
+                        <div class="field-item ${itemClass}">
+                            <div class="field-label">${displayName}</div>
+                            <div class="field-value">${value || 'Not detected'}</div>
+                        </div>
+                    `;
+                }
+                
+                analysisHtml += `
+                        </div>
+                    </div>
+                `;
+                
+                // Add debug information
+                console.log('🔍 Field Detection Debug:', analysis.detected_fields);
+                console.log('🔍 Assay Type Value:', analysis.detected_fields.assay_type);
+                console.log('🔍 Assay Type Type:', typeof analysis.detected_fields.assay_type);
+            }
+
+            // Add suggestions if available
+            if (analysis.suggestions && analysis.suggestions.length > 0) {
+                analysisHtml += `
+                    <div class="analysis-section">
+                        <h4>💡 AI Suggestions</h4>
+                        <ul style="padding-left: 20px;">
+                `;
+                
+                analysis.suggestions.forEach(suggestion => {
+                    analysisHtml += `<li>${suggestion}</li>`;
                 });
-
-                if (!response.ok) {
-                    throw new Error(`Server error: ${response.status}`);
-                }
-
-                const result = await response.json();
-                hideTyping();
-
-                if (result.content && result.content[0] && result.content[0].text) {
-                    const caseResult = JSON.parse(result.content[0].text);
-                    displayCaseCreationResult(caseResult);
-                } else {
-                    throw new Error('Invalid response format from server');
-                }
-            } catch (error) {
-                hideTyping();
-                console.error('Automatic Case Creation Error:', error);
-                addMessage('bot', `❌ Failed to create DPIA case automatically: ${error.message}<br><br>💡 <strong>Falling back to demo mode...</strong>`);
-                await createDPIACaseDemo({});
-            }
-        }
-
-        async function analyzeWithDemo(researchText) {
-            // Fallback demo mode
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            hideTyping();
-
-            const detectedFields = analyzeTextDemo(researchText);
-            const allFields = ['Pathologist', 'Therapeutic Area', 'Project Title', 'PI', 'Procedure', 'Assay Type/Staining Type', 'Request Purpose'];
-            const missingFields = allFields.filter(field => detectedFields[field] === 'Unknown');
-            
-            let response = `🔍 <strong>Analysis Complete!</strong> <em>(Demo Mode)</em><br><br>`;
-            response += `I've analyzed your research text (${researchText.length} characters) and here's what I found:<br><br>`;
-            
-            response += `<div class="field-status">`;
-            Object.entries(detectedFields).forEach(([field, value]) => {
-                const isDetected = value !== "Unknown" && value;
-                response += `<div class="field-item ${isDetected ? 'field-detected' : 'field-missing'}">
-                    <strong>${field}:</strong><br>${isDetected ? '✅' : '❌'} ${value}
-                </div>`;
-            });
-            response += `</div>`;
-
-            response += `<br>🤖 <strong>I need to ask you about ${missingFields.length} missing fields to create a complete DPIA case:</strong>`;
-            addMessage('bot', response);
-
-            if (missingFields.length > 0) {
-                setTimeout(() => {
-                    showInteractivePromptsDemo(missingFields);
-                }, 500);
-            }
-        }
-
-        function analyzeTextDemo(text) {
-            const fields = {
-                'Pathologist': 'Unknown',
-                'Therapeutic Area': 'Unknown',
-                'Project Title': 'Unknown',
-                'PI': 'Unknown',
-                'Procedure': 'Unknown',
-                'Assay Type/Staining Type': 'Unknown',
-                'Request Purpose': 'Unknown'
-            };
-
-            // Detect therapeutic area
-            if (text.toLowerCase().includes('lung') || text.toLowerCase().includes('stem cell')) {
-                fields['Therapeutic Area'] = 'Neurology';
-            } else if (text.toLowerCase().includes('cancer') || text.toLowerCase().includes('tumor')) {
-                fields['Therapeutic Area'] = 'Oncology';
-            } else if (text.toLowerCase().includes('heart') || text.toLowerCase().includes('cardiovascular')) {
-                fields['Therapeutic Area'] = 'CVRM';
-            }
-
-            // Detect procedure type
-            if (text.toLowerCase().includes('tritc') || text.toLowerCase().includes('dapi') || text.toLowerCase().includes('fluorescence')) {
-                fields['Procedure'] = 'Fluorescence (IF)';
-            } else if (text.toLowerCase().includes('bright-field') || text.toLowerCase().includes('brightfield')) {
-                fields['Procedure'] = 'Bright-field (BF)';
-            } else if (text.toLowerCase().includes('h&e') || text.toLowerCase().includes('hematoxylin')) {
-                fields['Procedure'] = 'Bright-field (BF)';
-            }
-
-            // Detect assay/staining type
-            if (text.toLowerCase().includes('h&e') || text.toLowerCase().includes('hematoxylin')) {
-                fields['Assay Type/Staining Type'] = 'H&E';
-            } else if (text.toLowerCase().includes('ihc') || text.toLowerCase().includes('immunohistochemistry')) {
-                fields['Assay Type/Staining Type'] = 'IHC';
-            } else if (text.toLowerCase().includes('tritc') || text.toLowerCase().includes('dapi') || text.toLowerCase().includes('fluorescent')) {
-                fields['Assay Type/Staining Type'] = 'Other';
-            } else if (text.toLowerCase().includes('special stain')) {
-                fields['Assay Type/Staining Type'] = 'Special Stain';
-            }
-
-            // Detect request purpose
-            if (text.toLowerCase().includes('quantification')) {
-                fields['Request Purpose'] = 'Quantification and analysis';
-            } else if (text.toLowerCase().includes('imaging') || text.toLowerCase().includes('documentation')) {
-                fields['Request Purpose'] = 'Imaging and documentation';
-            } else if (text.toLowerCase().includes('biomarker')) {
-                fields['Request Purpose'] = 'Biomarker analysis';
-            } else if (text.toLowerCase().includes('validation')) {
-                fields['Request Purpose'] = 'Research validation';
-            } else if (text.toLowerCase().includes('diagnostic')) {
-                fields['Request Purpose'] = 'Diagnostic support';
-            }
-
-            return fields;
-        }
-
-        function showInteractivePrompts(prompts) {
-            let promptsHtml = `💬 <strong>I need some additional information:</strong><br><br>`;
-            currentPrompts = prompts;
-            
-            prompts.forEach((prompt, index) => {
-                promptsHtml += `<div class="interactive-prompt">
-                    <div class="prompt-question">${prompt.question}</div>`;
                 
-                if (prompt.input_type === 'selection') {
-                    promptsHtml += `<div class="prompt-options">`;
-                    prompt.options.forEach(option => {
-                        promptsHtml += `<label class="prompt-option">
-                            <input type="radio" name="prompt_${prompt.field}" value="${option}">
-                            ${option}
-                        </label>`;
+                analysisHtml += `
+                        </ul>
+                    </div>
+                `;
+            }
+
+            // Add Galileo AI interactive prompts if available
+            if (analysis.interactive_prompts && analysis.interactive_prompts.length > 0) {
+                console.log('🤖 Debug - Interactive Prompts:', analysis.interactive_prompts);
+                
+                // Filter out generic error prompts - handle both string and object formats
+                const validPrompts = analysis.interactive_prompts.filter(prompt => {
+                    const promptText = typeof prompt === 'string' ? prompt : prompt.question || prompt.text || '';
+                    return !promptText.includes('Galileo AI LLM is not available') && 
+                           !promptText.includes('check your Galileo AI configuration');
+                });
+                
+                if (validPrompts.length > 0) {
+                    analysisHtml += `
+                        <div class="analysis-section">
+                            <h4>🤖 AI Interactive Prompts</h4>
+                            <p style="margin-bottom: 10px; color: #666;">Galileo AI suggests asking for the following information:</p>
+                            <div class="ai-prompts-container">
+                    `;
+                    
+                    validPrompts.forEach((prompt, index) => {
+                        // Handle both string and object formats
+                        const promptText = typeof prompt === 'string' ? prompt : prompt.question || prompt.text || '';
+                        const promptField = typeof prompt === 'object' ? prompt.field || 'unknown' : 'unknown';
+                        
+                        analysisHtml += `
+                            <div class="ai-prompt-item">
+                                <span class="prompt-icon">❓</span>
+                                <span class="prompt-text">${promptText}</span>
+                            </div>
+                        `;
                     });
-                    promptsHtml += `</div>`;
-                } else if (prompt.input_type === 'text_input') {
-                    promptsHtml += `<input type="text" class="prompt-input" id="prompt_${prompt.field}" placeholder="Enter ${prompt.field.toLowerCase()}...">`;
-                    if (prompt.suggestions) {
-                        promptsHtml += `<div class="prompt-suggestions">💡 Suggestions: ${prompt.suggestions.join(', ')}</div>`;
+                    
+                    analysisHtml += `
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            // Check for missing mandatory fields
+            const mandatoryFields = ['therapeutic_area', 'pi_name', 'pathologist', 'assay_type'];
+            
+            // Add DPIA-specific mandatory fields if DPIA is recommended
+            let dpiaSpecificFields = [];
+            if (caseTypeRecommendation && caseTypeRecommendation.recommended_type === 'DPIA') {
+                dpiaSpecificFields = ['number_of_slides', 'estimated_drop_off_date'];
+                mandatoryFields.push(...dpiaSpecificFields);
+            }
+            
+            // Add CALM-specific mandatory fields if CALM is recommended
+            let calmSpecificFields = [];
+            if (caseTypeRecommendation && caseTypeRecommendation.recommended_type === 'CALM') {
+                calmSpecificFields = ['number_of_images', 'analysis_type', 'link_for_images'];
+                mandatoryFields.push(...calmSpecificFields);
+            }
+            
+            const missingMandatory = mandatoryFields.filter(field => {
+                const value = analysis.detected_fields[field];
+                // Special handling for assay_type - "Other" is a valid value
+                if (field === 'assay_type') {
+                    return !value || value === 'Unknown' || value === '';
+                }
+                // DPIA-specific fields are always considered missing initially
+                if (dpiaSpecificFields.includes(field)) {
+                    return true;
+                }
+                // CALM-specific fields are always considered missing initially
+                if (calmSpecificFields.includes(field)) {
+                    return true;
+                }
+                return !value || value === 'Unknown' || value === '' || value.trim() === '';
+            });
+
+            console.log('🔍 Debug - Missing Mandatory Fields:', missingMandatory);
+            console.log('🔍 Debug - All Detected Fields:', analysis.detected_fields);
+            console.log('🔍 Debug - Case Type Recommendation:', caseTypeRecommendation?.recommended_type);
+
+            if (missingMandatory.length > 0) {
+                analysisHtml += `
+                    <div class="interactive-prompts">
+                        <h4>📝 Missing Mandatory Information</h4>
+                        <p>Please provide the following required information to proceed with case creation:</p>
+                `;
+                
+                const fieldLabels = {
+                    'therapeutic_area': 'Therapeutic Area',
+                    'pi_name': 'Principal Investigator (PI)',
+                    'pathologist': 'Pathologist',
+                    'assay_type': 'Assay Type/Staining Type',
+                    'number_of_slides': 'Number of Slides',
+                    'estimated_drop_off_date': 'Estimated Drop-off Date',
+                    'number_of_images': 'Number of Images',
+                    'analysis_type': 'Analysis Type',
+                    'link_for_images': 'Link for Images'
+                };
+                
+                missingMandatory.forEach(field => {
+                    if (field === 'therapeutic_area') {
+                        analysisHtml += `
+                            <div class="prompt-item">
+                                <div class="prompt-label">${fieldLabels[field]}:</div>
+                                <select class="prompt-input" id="field_${field}">
+                                    <option value="">Select therapeutic area...</option>
+                                    <option value="Oncology">Oncology</option>
+                                    <option value="Immunology">Immunology</option>
+                                    <option value="Neuroscience">Neuroscience</option>
+                                    <option value="Cardiovascular">Cardiovascular</option>
+                                    <option value="Respiratory">Respiratory</option>
+                                    <option value="Infectious Diseases">Infectious Diseases</option>
+                                    <option value="Metabolic Disorders">Metabolic Disorders</option>
+                                    <option value="Rare Diseases">Rare Diseases</option>
+                                    <option value="Ophthalmology">Ophthalmology</option>
+                                    <option value="Dermatology">Dermatology</option>
+                                    <option value="Gastroenterology">Gastroenterology</option>
+                                    <option value="Endocrinology">Endocrinology</option>
+                                    <option value="Hematology">Hematology</option>
+                                    <option value="Nephrology">Nephrology</option>
+                                    <option value="Rheumatology">Rheumatology</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                        `;
+                    } else if (field === 'pi_name') {
+                        analysisHtml += `
+                            <div class="prompt-item">
+                                <div class="prompt-label">${fieldLabels[field]} <span style="color: red;">*</span>:</div>
+                                <input type="text" class="prompt-input" id="field_${field}" 
+                                       placeholder="Enter Principal Investigator name..." required>
+                            </div>
+                        `;
+                    } else if (field === 'pathologist') {
+                        analysisHtml += `
+                            <div class="prompt-item">
+                                <div class="prompt-label">${fieldLabels[field]} <span style="color: red;">*</span>:</div>
+                                <input type="text" class="prompt-input" id="field_${field}" 
+                                       placeholder="Enter Pathologist name..." required>
+                            </div>
+                        `;
+                    } else if (field === 'assay_type') {
+                        analysisHtml += `
+                            <div class="prompt-item">
+                                <div class="prompt-label">${fieldLabels[field]} <span style="color: red;">*</span>:</div>
+                                <input type="text" class="prompt-input" id="field_${field}" 
+                                       placeholder="Enter assay type or staining type..." required>
+                            </div>
+                        `;
+                    } else if (field === 'number_of_slides') {
+                        analysisHtml += `
+                            <div class="prompt-item">
+                                <div class="prompt-label">${fieldLabels[field]} <span style="color: red;">*</span>:</div>
+                                <input type="number" class="prompt-input" id="field_${field}" 
+                                       placeholder="Enter number of slides..." min="1" required>
+                            </div>
+                        `;
+                    } else if (field === 'estimated_drop_off_date') {
+                        analysisHtml += `
+                            <div class="prompt-item">
+                                <div class="prompt-label">${fieldLabels[field]} <span style="color: red;">*</span>:</div>
+                                <input type="date" class="prompt-input" id="field_${field}" required>
+                            </div>
+                        `;
+                    } else if (field === 'number_of_images') {
+                        analysisHtml += `
+                            <div class="prompt-item">
+                                <div class="prompt-label">${fieldLabels[field]} <span style="color: red;">*</span>:</div>
+                                <input type="number" class="prompt-input" id="field_${field}" 
+                                       placeholder="Enter number of images..." min="1" required>
+                            </div>
+                        `;
+                    } else if (field === 'analysis_type') {
+                        analysisHtml += `
+                            <div class="prompt-item">
+                                <div class="prompt-label">${fieldLabels[field]} <span style="color: red;">*</span>:</div>
+                                <select class="prompt-input" id="field_${field}" required>
+                                    <option value="">Select analysis type...</option>
+                                    <option value="Apoptosis">Apoptosis</option>
+                                    <option value="Object count">Object count</option>
+                                    <option value="Area measurement">Area measurement</option>
+                                </select>
+                            </div>
+                        `;
+                    } else if (field === 'link_for_images') {
+                        analysisHtml += `
+                            <div class="prompt-item">
+                                <div class="prompt-label">${fieldLabels[field]} <span style="color: red;">*</span>:</div>
+                                <input type="text" class="prompt-input" id="field_${field}" 
+                                       placeholder="Enter link for images..." required>
+                            </div>
+                        `;
                     }
+                });
+                
+                // Add optional DPIA-specific fields if DPIA is recommended
+                if (caseTypeRecommendation && caseTypeRecommendation.recommended_type === 'DPIA') {
+                    analysisHtml += `
+                        <div style="margin-top: 20px; padding-top: 15px; border-top: 1px solid #ddd;">
+                            <h5 style="color: #666; margin-bottom: 15px;">📋 Optional DPIA Information</h5>
+                            
+                            <div class="prompt-item">
+                                <div class="prompt-label">Instrument:</div>
+                                <select class="prompt-input" id="field_instrument">
+                                    <option value="">Select instrument...</option>
+                                    <option value="Labs Discretion">Labs Discretion</option>
+                                    <option value="Specify an Instrument">Specify an Instrument</option>
+                                </select>
+                            </div>
+                            
+                            <div class="prompt-item">
+                                <div class="prompt-label">Label:</div>
+                                <select class="prompt-input" id="field_label">
+                                    <option value="">Select label type...</option>
+                                    <option value="Single">Single</option>
+                                    <option value="Dual">Dual</option>
+                                    <option value="Triple">Triple</option>
+                                    <option value="Higher order multiplex">Higher order multiplex</option>
+                                </select>
+                            </div>
+                            
+                            <div class="prompt-item">
+                                <div class="prompt-label">Antibody/Probe:</div>
+                                <input type="text" class="prompt-input" id="field_antibody_probe" 
+                                       placeholder="Enter antibody or probe information...">
+                            </div>
+                        </div>
+                    `;
                 }
                 
-                promptsHtml += `</div>`;
-            });
-            
-            promptsHtml += `<button class="submit-responses-btn" onclick="submitPromptResponses()">
-                🚀 Submit Responses & Create DPIA Case
-            </button>`;
+                analysisHtml += `
+                        <div class="button-group" style="margin-top: 15px;">
+                            <button onclick="submitMissingFields()" class="btn btn-success">
+                                ✅ Submit Information & Create Case
+                        </button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                analysisHtml += `
+                    <div class="status success">
+                        ✅ All mandatory fields detected! Ready to create case.
+                        <div class="button-group" style="margin-top: 15px;">
+                            <button onclick="createCaseWithRecommendedType()" class="btn btn-success">
+                                🚀 Create ${caseTypeRecommendation.recommended_type} Case
+                        </button>
+                    </div>
+                </div>
+            `;
+            }
 
-            addMessage('bot', promptsHtml);
-            awaitingPromptResponses = true;
+            addMessage(analysisHtml, 'analysis', true);
         }
 
-        function showInteractivePromptsDemo(missingFields) {
-            let promptsHtml = `💬 <strong>I need some additional information:</strong><br><br>`;
+        // Determine AI case type recommendation based on analysis
+        function determineCaseTypeRecommendation(analysis) {
+            console.log('🔍 Debug - Full analysis object:', analysis);
+            console.log('🔍 Debug - Analysis keys:', Object.keys(analysis));
             
-            const prompts = [];
-            
-            if (missingFields.includes('Pathologist')) {
-                prompts.push({
-                    field: 'Pathologist',
-                    question: '🔬 Who is the pathologist for this project?',
-                    input_type: 'text_input',
-                    suggestions: ['Dr. Bhashyam', 'Dr. Smith', 'Dr. Johnson', 'Dr. Wilson']
-                });
+            // First, check if Galileo AI provided a case type recommendation
+            if (analysis.recommended_case_type && analysis.recommended_case_type !== 'Unknown' && analysis.recommended_case_type !== null) {
+                console.log('🤖 Using Galileo AI case type recommendation:', analysis.recommended_case_type);
+                return {
+                    recommended_type: analysis.recommended_case_type,
+                    reasoning: analysis.case_type_reasoning || `Galileo AI recommends ${analysis.recommended_case_type} based on comprehensive analysis of the research text and context.`,
+                    confidence: analysis.case_type_confidence || 0.9,
+                    source: 'galileo_ai'
+                };
             }
             
-            if (missingFields.includes('Therapeutic Area')) {
-                prompts.push({
-                    field: 'Therapeutic Area',
-                    question: '🏥 Which therapeutic area does this research belong to?',
-                    input_type: 'selection',
-                    options: ['CVRM', 'Neurology', 'Oncology', 'Ophthalmology', 'Infectious Diseases', 'Immunology', 'Unknown']
-                });
+            // Check if the recommendation is in detected_fields
+            if (analysis.detected_fields && analysis.detected_fields.recommended_case_type && 
+                analysis.detected_fields.recommended_case_type !== 'Unknown' && 
+                analysis.detected_fields.recommended_case_type !== null) {
+                console.log('🤖 Using Galileo AI case type from detected_fields:', analysis.detected_fields.recommended_case_type);
+                return {
+                    recommended_type: analysis.detected_fields.recommended_case_type,
+                    reasoning: analysis.detected_fields.case_type_reasoning || `Galileo AI recommends ${analysis.detected_fields.recommended_case_type} based on comprehensive analysis.`,
+                    confidence: analysis.detected_fields.case_type_confidence || 0.9,
+                    source: 'galileo_ai'
+                };
             }
             
-            if (missingFields.includes('Project Title')) {
-                prompts.push({
-                    field: 'Project Title',
-                    question: '📋 What would you like to call this project?',
-                    input_type: 'text_input',
-                    suggestions: ['Lung Stem Cell Analysis', 'AT2 Cell Quantification Study', 'Fluorescence Imaging Project', 'Pathology Research Study']
-                });
+            // If no Galileo AI recommendation found, provide a simple fallback
+            console.log('⚠️ No Galileo AI case type recommendation found, using simple fallback');
+            console.log('🔍 Debug - Available fields in analysis:', Object.keys(analysis));
+            if (analysis.detected_fields) {
+                console.log('🔍 Debug - Available fields in detected_fields:', Object.keys(analysis.detected_fields));
             }
             
-            if (missingFields.includes('PI')) {
-                prompts.push({
-                    field: 'PI',
-                    question: '👨‍🔬 Who is the Primary Investigator for this project?',
-                    input_type: 'text_input',
-                    suggestions: ['Dr. Research Lead', 'Principal Investigator', 'Study Director', 'Project Lead']
-                });
-            }
+            // Simple fallback based on research context
+            const originalText = currentResearchText || '';
+            const allText = originalText.toLowerCase();
             
-            if (missingFields.includes('Procedure')) {
-                prompts.push({
-                    field: 'Procedure',
-                    question: '🔬 What type of procedure will be used?',
-                    input_type: 'selection',
-                    options: ['Bright-field (BF)', 'Fluorescence (IF)', 'BF+IF', 'Unknown']
-                });
-            }
+            // Simple biological research detection
+            const isBiologicalResearch = allText.includes('mouse') || allText.includes('mice') || 
+                                       allText.includes('tissue') || allText.includes('cell') || 
+                                       allText.includes('stain') || allText.includes('research');
             
-            if (missingFields.includes('Assay Type/Staining Type')) {
-                prompts.push({
-                    field: 'Assay Type/Staining Type',
-                    question: '🧪 What type of assay or staining will be performed?',
-                    input_type: 'selection',
-                    options: ['H&E', 'IHC', 'Special Stain', 'Other', 'Unknown']
-                });
+            if (isBiologicalResearch) {
+                return {
+                    recommended_type: 'CALM',
+                    reasoning: 'Biological research context detected. CALM services are recommended for laboratory compliance and advanced microscopy workflows.',
+                    confidence: 0.7,
+                    source: 'simple_fallback'
+                };
+            } else {
+                return {
+                    recommended_type: 'DPIA',
+                    reasoning: 'General analysis request. DPIA services are recommended for digital pathology workflows.',
+                    confidence: 0.6,
+                    source: 'simple_fallback'
+                };
             }
-            
-            if (missingFields.includes('Request Purpose')) {
-                prompts.push({
-                    field: 'Request Purpose',
-                    question: '🎯 What is the main purpose of this research request?',
-                    input_type: 'selection',
-                    options: ['Quantification and analysis', 'Imaging and documentation', 'Biomarker analysis', 'Research validation', 'Diagnostic support', 'Other']
-                });
-            }
-
-            currentPrompts = prompts;
-            showInteractivePrompts(prompts);
         }
 
-        async function submitPromptResponses() {
-            const responses = {};
-            let allAnswered = true;
+        // Select case type and proceed
+        function selectCaseType(caseType) {
+            addMessage(`✅ You selected: **${caseType}** case type`, 'user', true);
             
-            currentPrompts.forEach(prompt => {
-                if (prompt.input_type === 'selection') {
-                    const selected = document.querySelector(`input[name="prompt_${prompt.field}"]:checked`);
-                    if (selected) {
-                        responses[prompt.field] = selected.value;
-                    } else {
-                        allAnswered = false;
-                    }
-                } else if (prompt.input_type === 'text_input') {
-                    const input = document.getElementById(`prompt_${prompt.field}`);
-                    if (input && input.value.trim()) {
-                        responses[prompt.field] = input.value.trim();
-                    } else {
-                        allAnswered = false;
-                    }
-                }
-            });
+            // Check if we have all mandatory fields
+            const mandatoryFields = ['therapeutic_area', 'pi_name', 'pathologist', 'assay_type'];
+            const missingMandatory = mandatoryFields.filter(field => 
+                !currentAnalysis.detected_fields[field] || 
+                currentAnalysis.detected_fields[field] === 'Unknown' || 
+                currentAnalysis.detected_fields[field] === ''
+            );
 
-            if (!allAnswered) {
-                addMessage('bot', '⚠️ Please answer all questions before submitting.');
+            if (missingMandatory.length > 0) {
+                addMessage(`⚠️ Please provide the missing mandatory information above before creating the ${caseType} case.`, 'bot');
+            } else {
+                createCaseWithType(caseType);
+            }
+        }
+
+        // Create case with specific type
+        async function createCaseWithType(caseType) {
+            if (!currentAnalysis || !currentAnalysis.detected_fields) {
+                addMessage('❌ No analysis data available. Please analyze research text first.', 'bot');
                 return;
             }
 
-            // Show user's responses
-            let responseText = '📝 <strong>My responses:</strong><br>';
-            Object.entries(responses).forEach(([field, value]) => {
-                responseText += `• ${field}: ${value}<br>`;
-            });
-            addMessage('user', responseText);
+            // Show loading
+            if (!showLoading(`🚀 Creating ${caseType} case...`)) {
+                return;
+            }
 
-            // Show processing
-            showTyping();
+            try {
+                // Force the case type in detected fields
+                const detectedFields = { ...currentAnalysis.detected_fields };
+                detectedFields.recommended_case_type = caseType;
 
-            if (serverConnected) {
-                await createDPIACaseReal(responses);
-            } else {
-                await createDPIACaseDemo(responses);
+                const response = await fetch(`${API_BASE}/tools/call`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        name: 'create_dpia_case_only',
+                        arguments: {
+                            detected_fields: detectedFields,
+                            research_text: currentResearchText || ''
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Server responded with status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                removeLastMessage(); // Remove loading message
+
+                if (data.content && data.content[0] && data.content[0].text) {
+                    const result = JSON.parse(data.content[0].text);
+                    
+                    if (result.case_created && result.case_id) {
+                        addMessage(`🎉 **${result.case_type || caseType} Case Created Successfully!**\n\n` +
+                                 `**Case ID:** ${result.case_id}\n` +
+                                 `**Status:** ${result.case_status || 'Created'}\n` +
+                                 `**Type:** ${result.case_type || caseType}\n\n` +
+                                 `Your case has been submitted to the Pega system for processing.`, 'bot', true);
+                } else {
+                        addMessage(`❌ Failed to create ${caseType} case: ${result.error || result.message || 'Unknown error'}`, 'bot');
+                }
+                } else {
+                    addMessage(`❌ Failed to create ${caseType} case. Please try again.`, 'bot');
+                }
+
+            } catch (error) {
+                removeLastMessage();
+                console.error('Case creation error:', error);
+                addMessage(`❌ Error creating ${caseType} case: ${error.message}`, 'bot');
             }
         }
 
-        async function createDPIACaseReal(responses) {
-            try {
-                // Get the original research text from the first user message
-                const originalText = currentConversation.find(msg => msg.type === 'user')?.content || '';
+        // Create case with recommended type
+        async function createCaseWithRecommendedType() {
+            if (!currentCaseTypeRecommendation) {
+                addMessage('❌ No case type recommendation available. Please analyze research text first.', 'bot');
+                return;
+            }
+            
+            const recommendedType = currentCaseTypeRecommendation.recommended_type;
+            await createCaseWithType(recommendedType);
+        }
+
+        // Submit missing fields and create case
+        async function submitMissingFields() {
+            const mandatoryFields = ['therapeutic_area', 'pi_name', 'pathologist', 'assay_type'];
+            
+            // Add DPIA-specific mandatory fields if DPIA is recommended
+            if (currentCaseTypeRecommendation && currentCaseTypeRecommendation.recommended_type === 'DPIA') {
+                mandatoryFields.push('number_of_slides', 'estimated_drop_off_date');
+            }
+            
+            // Add CALM-specific mandatory fields if CALM is recommended
+            if (currentCaseTypeRecommendation && currentCaseTypeRecommendation.recommended_type === 'CALM') {
+                mandatoryFields.push('number_of_images', 'analysis_type', 'link_for_images');
+            }
+            
+            const promptResponses = {};
+            
+            // Collect responses for mandatory fields
+            for (const field of mandatoryFields) {
+                const input = document.getElementById(`field_${field}`);
+                if (input) {
+                    // Handle both text inputs and select dropdowns
+                    const value = input.tagName.toLowerCase() === 'select' ? input.value : input.value.trim();
+                    if (value) {
+                        promptResponses[field] = value;
+                    }
+                }
+            }
+            
+            // Collect optional DPIA-specific fields if DPIA is recommended
+            if (currentCaseTypeRecommendation && currentCaseTypeRecommendation.recommended_type === 'DPIA') {
+                const optionalFields = ['instrument', 'label', 'antibody_probe'];
+                for (const field of optionalFields) {
+                    const input = document.getElementById(`field_${field}`);
+                    if (input) {
+                        const value = input.tagName.toLowerCase() === 'select' ? input.value : input.value.trim();
+                        if (value) {
+                            promptResponses[field] = value;
+                        }
+                    }
+                }
+            }
+            
+            // Debug logging
+            console.log('🔍 Debug - Prompt Responses:', promptResponses);
+            console.log('🔍 Debug - Current Analysis:', currentAnalysis?.detected_fields);
+            console.log('🔍 Debug - Case Type:', currentCaseTypeRecommendation?.recommended_type);
+            
+            // Validate that all mandatory fields are provided
+            const stillMissing = mandatoryFields.filter(field => {
+                // Check if field was already detected or provided in prompt
+                const detectedValue = currentAnalysis?.detected_fields[field];
+                const promptValue = promptResponses[field];
                 
-                const response = await fetch(CONFIG.API_URL, {
+                console.log(`🔍 Debug - Field ${field}:`, {
+                    detected: detectedValue,
+                    prompt: promptValue,
+                    hasDetected: detectedValue && detectedValue !== 'Unknown' && detectedValue !== '',
+                    hasPrompt: promptValue && promptValue !== ''
+                });
+                
+                // Special handling for assay_type - "Other" is a valid value
+                if (field === 'assay_type') {
+                    const hasDetected = detectedValue && detectedValue !== 'Unknown' && detectedValue !== '';
+                    const hasPrompt = promptValue && promptValue !== '';
+                    return !hasDetected && !hasPrompt;
+                }
+                
+                // DPIA-specific fields are always required when DPIA is recommended
+                if (['number_of_slides', 'estimated_drop_off_date'].includes(field)) {
+                    return !promptValue || promptValue === '';
+                }
+                
+                // CALM-specific fields are always required when CALM is recommended
+                if (['number_of_images', 'analysis_type', 'link_for_images'].includes(field)) {
+                    return !promptValue || promptValue === '';
+                }
+                
+                const hasDetected = detectedValue && detectedValue !== 'Unknown' && detectedValue !== '' && detectedValue.trim() !== '';
+                const hasPrompt = promptValue && promptValue !== '';
+                return !hasDetected && !hasPrompt;
+            });
+
+            if (stillMissing.length > 0) {
+                const fieldLabels = {
+                    'therapeutic_area': 'Therapeutic Area',
+                    'pi_name': 'Principal Investigator (PI)',
+                    'pathologist': 'Pathologist',
+                    'assay_type': 'Assay Type/Staining Type',
+                    'number_of_slides': 'Number of Slides',
+                    'estimated_drop_off_date': 'Estimated Drop-off Date',
+                    'number_of_images': 'Number of Images',
+                    'analysis_type': 'Analysis Type',
+                    'link_for_images': 'Link for Images'
+                };
+                
+                const missingLabels = stillMissing.map(field => fieldLabels[field] || field);
+                addMessage(`❌ Please provide all mandatory fields: ${missingLabels.join(', ')}`, 'bot');
+                return;
+            }
+
+            // Show loading
+            if (!showLoading('🚀 Creating case with provided information...')) {
+                return;
+            }
+
+            try {
+                // Determine case type
+                const caseType = currentCaseTypeRecommendation ? currentCaseTypeRecommendation.recommended_type : 'DPIA';
+                
+                const response = await fetch(`${API_BASE}/tools/call`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -867,142 +1418,131 @@
                     body: JSON.stringify({
                         name: 'analyze_and_create_dpia',
                         arguments: {
-                            research_text: originalText,
+                            research_text: currentResearchText || '',
                             auto_create: true,
-                            prompt_responses: responses
+                            prompt_responses: promptResponses
                         }
                     })
                 });
 
                 if (!response.ok) {
-                    throw new Error(`Server error: ${response.status}`);
+                    throw new Error(`Server responded with status: ${response.status}`);
                 }
 
-                const result = await response.json();
-                hideTyping();
+                const data = await response.json();
+                removeLastMessage(); // Remove loading message
 
-                if (result.content && result.content[0] && result.content[0].text) {
-                    const caseResult = JSON.parse(result.content[0].text);
-                    displayCaseCreationResult(caseResult);
-                } else {
-                    throw new Error('Invalid response format from server');
-                }
-            } catch (error) {
-                hideTyping();
-                console.error('Case Creation Error:', error);
-                addMessage('bot', `❌ Failed to create DPIA case: ${error.message}<br><br>💡 <strong>Falling back to demo mode...</strong>`);
-                await createDPIACaseDemo(responses);
-            }
-        }
-
-        async function createDPIACaseDemo(responses) {
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            hideTyping();
-
-            const caseId = 'C-' + Math.floor(Math.random() * 90000 + 10000);
-            
-            const successMessage = `
-                <div class="case-success">
-                    <strong>🎉 DPIA Case Created Successfully!</strong> <em>(Demo Mode)</em><br>
-                    <strong>Case ID:</strong> ${caseId}<br>
-                    <strong>Status:</strong> Validated & Complete<br>
-                    <strong>Fields:</strong> 7/7 Complete
-                </div>
-                
-                <strong>Perfect! I've successfully created your DPIA case with all the information we gathered together!</strong><br><br>
-                
-                🔍 <strong>What I did:</strong><br>
-                • Analyzed your research text automatically<br>
-                • Asked for missing mandatory information<br>
-                • Validated all required fields<br>
-                • Created a complete DPIA case<br><br>
-                
-                <div class="quick-actions">
-                    <button class="quick-action-btn" onclick="sendQuickMessage('Analyze another research project')">🔄 New Analysis</button>
-                    <button class="quick-action-btn" onclick="sendQuickMessage('Show me the case details')">📋 Case Details</button>
-                </div>
-                
-                Is there anything else I can help you with?
-            `;
-
-            addMessage('bot', successMessage);
-            awaitingPromptResponses = false;
-            currentPrompts = [];
-        }
-
-        function displayCaseCreationResult(result) {
-            if (result.success && result.case_created) {
-                const successMessage = `
-                    <div class="case-success">
-                        <strong>🎉 DPIA Case Created Successfully!</strong><br>
-                        <strong>Case ID:</strong> ${result.case_id || 'Unknown'}<br>
-                        <strong>Status:</strong> Validated & Complete<br>
-                        <strong>Fields:</strong> ${result.summary?.detected_fields || 7}/${result.summary?.total_fields || 7} Complete
-                    </div>
+                if (data.content && data.content[0] && data.content[0].text) {
+                    const result = JSON.parse(data.content[0].text);
                     
-                    <strong>Perfect! I've successfully created your DPIA case in the Pega system!</strong><br><br>
-                    
-                    🔍 <strong>What I did:</strong><br>
-                    • Analyzed your research text automatically<br>
-                    • Collected missing mandatory information<br>
-                    • Validated all required fields<br>
-                    • Created a complete DPIA case in Pega<br><br>
-                    
-                    <div class="quick-actions">
-                        <button class="quick-action-btn" onclick="sendQuickMessage('Analyze another research project')">🔄 New Analysis</button>
-                        <button class="quick-action-btn" onclick="sendQuickMessage('Show me the case details')">📋 Case Details</button>
-                    </div>
-                    
-                    Is there anything else I can help you with?
-                `;
-                addMessage('bot', successMessage);
+                    if (result.case_created && result.case_id) {
+                        addMessage(`🎉 **${result.case_type || caseType} Case Created Successfully!**\n\n` +
+                                 `**Case ID:** ${result.case_id}\n` +
+                                 `**Status:** ${result.case_status || 'Created'}\n` +
+                                 `**Type:** ${result.case_type || caseType}\n\n` +
+                                 `Your case has been submitted to the Pega system for processing.`, 'bot', true);
             } else {
-                const errorMessage = result.error || result.message || 'Unknown error occurred';
-                addMessage('bot', `❌ Failed to create DPIA case: ${errorMessage}<br><br>💡 The analysis was successful, but there was an issue with case creation. This might be due to Pega server connectivity.`);
+                        addMessage(`❌ Failed to create case: ${result.case_error || result.error || 'Unknown error'}`, 'bot');
+                    }
+                } else {
+                    addMessage('❌ Failed to create case. Please try again.', 'bot');
+                }
+
+            } catch (error) {
+                removeLastMessage();
+                console.error('Case creation error:', error);
+                addMessage(`❌ Error creating case: ${error.message}`, 'bot');
             }
-            
-            awaitingPromptResponses = false;
-            currentPrompts = [];
         }
 
-        function addMessage(sender, content) {
-            const messagesContainer = document.getElementById('chatMessages');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${sender}`;
+        // Test case type recommendation specifically
+        function testCaseTypeRecommendation() {
+            const testTexts = [
+                "CALM request for CD19/CD20 Allo1 CAR-T MS",
+                "DPIA request for imaging analysis",
+                "Leica SP8 - Bldg 12 Time-lapse imaging to monitor small molecule distribution",
+                "Sample processing and storage compliance validation"
+            ];
             
-            const avatar = sender === 'user' ? '👤' : '🤖';
+            let debugInfo = '<h4>🧪 Case Type Recommendation Test</h4>';
             
-            messageDiv.innerHTML = `
-                <div class="message-avatar">${avatar}</div>
-                <div class="message-content">${content}</div>
-            `;
-            
-            messagesContainer.appendChild(messageDiv);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            
-            // Store conversation for context - store original text, not HTML
-            currentConversation.push({
-                type: sender,
-                content: content.replace(/<[^>]*>/g, '').trim(), // Strip HTML tags for API calls
-                timestamp: new Date().toISOString()
+            testTexts.forEach((text, index) => {
+                // Simulate analysis for each text
+                const mockAnalysis = {
+                    detected_fields: {
+                        project_title: text,
+                        request_purpose: "Test purpose"
+                    }
+                };
+                
+                // Temporarily set current research text
+                const originalText = currentResearchText;
+                currentResearchText = text;
+                
+                const recommendation = determineCaseTypeRecommendation(mockAnalysis);
+                
+                debugInfo += `<h5>Test ${index + 1}: "${text}"</h5><ul>`;
+                debugInfo += `<li><strong>Recommended</strong>: ${recommendation.recommended_type}</li>`;
+                debugInfo += `<li><strong>Confidence</strong>: ${(recommendation.confidence * 100).toFixed(1)}%</li>`;
+                debugInfo += `<li><strong>DPIA Score</strong>: ${recommendation.dpia_score} (${recommendation.dpia_matches?.join(', ') || 'none'})</li>`;
+                debugInfo += `<li><strong>CALM Score</strong>: ${recommendation.calm_score} (${recommendation.calm_matches?.join(', ') || 'none'})</li>`;
+                debugInfo += '</ul>';
+                
+                // Restore original text
+                currentResearchText = originalText;
             });
-        }
-
-        function showTyping() {
-            document.getElementById('typingIndicator').style.display = 'flex';
-            document.getElementById('sendBtn').disabled = true;
             
-            const messagesContainer = document.getElementById('chatMessages');
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            addMessage(debugInfo, 'bot', true);
         }
 
-        function hideTyping() {
-            document.getElementById('typingIndicator').style.display = 'none';
-            document.getElementById('sendBtn').disabled = false;
+        // Test case type recommendation logic
+        function testCaseTypeRecommendationLogic() {
+            console.log('🧪 Testing Case Type Recommendation Logic');
+            
+            const testCases = [
+                "I want to research on 3D Image analysis of Cleared Mouse Eyes stained with SOX9 + NucSpot 750",
+                "CALM request for CD19/CD20 Allo1 CAR-T MS",
+                "Leica SP8 - Bldg 12 Time-lapse imaging to monitor small molecule distribution in mammalian cells",
+                "Sample processing and storage protocol validation for biobank compliance"
+            ];
+            
+            testCases.forEach((testText, index) => {
+                console.log(`\n🧪 Test Case ${index + 1}: "${testText}"`);
+                
+                // Simulate analysis with minimal detected fields
+                const mockAnalysis = {
+                    detected_fields: {
+                        therapeutic_area: 'Unknown',
+                        pi_name: 'Unknown',
+                        pathologist: 'Unknown',
+                        assay_type: 'Unknown',
+                        procedure_type: '',
+                        project_title: '',
+                        request_purpose: ''
+                    }
+                };
+                
+                // Set the current research text
+                currentResearchText = testText;
+                
+                // Test the recommendation
+                const recommendation = determineCaseTypeRecommendation(mockAnalysis);
+                
+                console.log(`✅ Result: ${recommendation.recommended_type} (${Math.round(recommendation.confidence * 100)}% confidence)`);
+                console.log(`📝 Reasoning: ${recommendation.reasoning}`);
+                console.log(`📊 Scores - DPIA: ${recommendation.dpia_score}, CALM: ${recommendation.calm_score}`);
+            });
+            
+            // Show results in UI
+            const testResultsHtml = `
+                <div class="analysis-section">
+                    <h4>🧪 Case Type Recommendation Test Results</h4>
+                    <p>Check the browser console (F12) for detailed test results.</p>
+                    <p>The test has been run on 4 different research texts to verify the recommendation logic.</p>
+                </div>
+            `;
+            addMessage(testResultsHtml, 'bot', true);
         }
-
-        // Periodic connection check
-        setInterval(checkServerConnection, 30000); // Check every 30 seconds
     </script>
 </body>
 </html> 

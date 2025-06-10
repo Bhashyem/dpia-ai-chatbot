@@ -298,7 +298,7 @@
             <div class="navigation">
                 <a href="index.html" class="nav-link">🏠 Home</a>
                 <a href="dpia_chatbot_production.html" class="nav-link">🤖 DPIA Chatbot</a>
-                <a href="http://localhost:8080/docs" class="nav-link" target="_blank">📚 API Docs</a>
+                <a href="#" class="nav-link" onclick="window.open(API_BASE + '/docs', '_blank')">📚 API Docs</a>
             </div>
         </div>
     </div>
@@ -309,7 +309,7 @@
             // Check if we're on GitHub Pages
             if (window.location.hostname === 'bhashyem.github.io') {
                 // Production environment - you'll need to set this to your deployed server
-                return 'https://your-dpia-server.herokuapp.com'; // Update this when you deploy
+                return 'https://dpia-server-production.herokuapp.com'; // Update this when you deploy
             }
             
             // Check for custom API URL in URL parameters
