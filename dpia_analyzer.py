@@ -18,8 +18,8 @@ from scanning_summarizer import ScanningRequestSummarizer
 
 # Pega Configuration
 PEGA_BASE_URL = "https://roche-gtech-dt1.pegacloud.net/prweb/api/v1"
-PEGA_USERNAME = "nadadhub"
-PEGA_PASSWORD = "Pwrm*2025"
+PEGA_USERNAME = ""
+PEGA_PASSWORD = ""
 
 # Basic auth header
 BASIC_AUTH = base64.b64encode(f"{PEGA_USERNAME}:{PEGA_PASSWORD}".encode()).decode()
